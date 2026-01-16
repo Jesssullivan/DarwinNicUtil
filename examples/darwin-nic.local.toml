@@ -1,0 +1,18 @@
+# Darwin Management NIC - Local Directory Config
+#
+# USAGE:
+#   Copy to your project directory as .darwin-nic.toml
+#   This overrides user config when darwin-nic is run from this directory
+#
+# EXAMPLE:
+#   cp examples/darwin-nic.local.toml ~/projects/network-automation/.darwin-nic.toml
+
+# Use a specific profile by default in this directory
+default_profile = "datacenter"
+
+# Or override specific values directly:
+# [defaults]
+# device_ip = "10.50.0.1"
+# laptop_ip = "10.50.0.100"
+# mgmt_network = "10.50.0.0/24"
+# device_name = "Project-Specific Switch"

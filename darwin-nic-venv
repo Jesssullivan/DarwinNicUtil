@@ -1,0 +1,23 @@
+#!/bin/bash
+# Darwin Management NIC Configurator - Virtual Environment Wrapper
+# This script ensures the virtual environment is activated before running the main script
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Check if virtual environment exists
+VENV_PATH="$SCRIPT_DIR/venv"
+if [ ! -d "$VENV_PATH" ]; then
+    echo "[FAIL] Virtual environment not found at $VENV_PATH"
+    echo "[i] Please run: python3 -m venv venv && source venv/bin/activate && pip install -e ."
+    exit 1
+fi
+
+# Check if dependencies are installed
+if ! "$VENV_PATH/bin/python3" -c "import rich" 2>/dev/null; then
+    echo "[*] Installing dependencies..."
+    "$VENV_PATH/bin/pip" install "rich>=13.0.0" "typing-extensions>=4.12.0" -e .
+fi
+
+# Run the main script with virtual environment Python
+exec "$VENV_PATH/bin/python3" "$SCRIPT_DIR/darwin-nic" "$@"

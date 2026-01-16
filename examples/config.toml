@@ -1,0 +1,66 @@
+# Darwin Management NIC Configurator - Example User Configuration
+#
+# INSTALLATION:
+#   cp examples/config.toml ~/.config/darwin-nic/config.toml
+#
+# CONFIG SEARCH ORDER (later overrides earlier):
+#   1. /etc/darwin-nic/config.toml       (system-wide)
+#   2. ~/.config/darwin-nic/config.toml  (user global)
+#   3. ./.darwin-nic.toml                (local directory)
+#   4. DARWIN_NIC_* environment vars
+#   5. CLI arguments
+
+# Default profile to use when none specified
+default_profile = "homelab"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DEFAULTS
+# Applied globally unless overridden by a profile
+# ─────────────────────────────────────────────────────────────────────────────
+[defaults]
+netmask = "255.255.255.0"
+preserve_wifi = true
+dry_run = false
+show_dashboard = false
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PROFILES
+# Named configurations for different environments
+# Usage: darwin-nic configure --profile <name>
+# ─────────────────────────────────────────────────────────────────────────────
+
+[profiles.homelab]
+# Primary home lab bastion switch
+device_ip = "192.168.88.1"
+laptop_ip = "192.168.88.100"
+mgmt_network = "192.168.10.0/24"
+device_name = "CRS309 Bastion"
+description = "Primary home lab management - MikroTik CRS309"
+device_type = "mikrotik"
+
+[profiles.homelab-secondary]
+# Secondary switch reachable via bastion
+device_ip = "192.168.88.2"
+laptop_ip = "192.168.88.100"
+mgmt_network = "192.168.10.0/24"
+device_name = "CRS310 Secondary"
+description = "Secondary switch - BiDi backhaul"
+device_type = "mikrotik"
+
+[profiles.datacenter]
+# Datacenter OOB management
+device_ip = "10.200.0.1"
+laptop_ip = "10.200.0.100"
+netmask = "255.255.255.0"
+mgmt_network = "10.200.0.0/24"
+device_name = "DC Core Switch"
+description = "Datacenter out-of-band management"
+
+[profiles.lab-isolated]
+# Air-gapped lab environment
+device_ip = "172.16.0.1"
+laptop_ip = "172.16.0.100"
+netmask = "255.255.0.0"
+mgmt_network = "172.16.0.0/16"
+device_name = "Isolated Lab Gateway"
+description = "Air-gapped test environment"

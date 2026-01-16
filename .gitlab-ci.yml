@@ -1,0 +1,152 @@
+# Darwin Management NIC Configurator - GitLab CI/CD
+#
+# Pipeline: lint -> test -> build -> pages
+# Python 3.14+ with PEP 750 template strings
+
+stages:
+  - lint
+  - test
+  - build
+  - pages
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PYTHON_VERSION: "3.14"
+
+# Cache pip packages between jobs
+.python-cache: &python-cache
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .cache/pip
+      - .venv
+
+# Base Python job template
+.python-base:
+  image: python:${PYTHON_VERSION}
+  <<: *python-cache
+  before_script:
+    - python -m pip install --upgrade pip uv
+    - uv venv .venv
+    - source .venv/bin/activate
+    - uv pip install -e ".[dev]"
+
+# =============================================================================
+# LINT STAGE
+# =============================================================================
+
+lint:black:
+  extends: .python-base
+  stage: lint
+  script:
+    - black --check --diff src/ tests/
+  allow_failure: false
+
+lint:ruff:
+  extends: .python-base
+  stage: lint
+  script:
+    - ruff check src/ tests/
+  allow_failure: false
+
+lint:mypy:
+  extends: .python-base
+  stage: lint
+  script:
+    - mypy src/darwin_mgmt_nic
+  allow_failure: true  # Strict mode may have issues
+
+# =============================================================================
+# TEST STAGE
+# =============================================================================
+
+test:unit:
+  extends: .python-base
+  stage: test
+  script:
+    - pytest tests/ -v --cov=src/darwin_mgmt_nic --cov-report=term-missing --cov-report=xml:coverage.xml --cov-report=html:htmlcov --junitxml=junit.xml
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  artifacts:
+    when: always
+    paths:
+      - htmlcov/
+      - coverage.xml
+      - junit.xml
+    reports:
+      junit: junit.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    expire_in: 1 week
+
+# =============================================================================
+# BUILD STAGE
+# =============================================================================
+
+build:binary:
+  extends: .python-base
+  stage: build
+  script:
+    - uv pip install pyinstaller>=6.0.0
+    - pyinstaller --onefile --name darwin-nic --hidden-import=rich --hidden-import=typing_extensions darwin-nic
+    - ./dist/darwin-nic --version
+    - ./dist/darwin-nic --help
+  artifacts:
+    paths:
+      - dist/darwin-nic
+    expire_in: 1 month
+  only:
+    - main
+    - tags
+
+build:wheel:
+  extends: .python-base
+  stage: build
+  script:
+    - uv pip install build
+    - python -m build
+  artifacts:
+    paths:
+      - dist/*.whl
+      - dist/*.tar.gz
+    expire_in: 1 month
+  only:
+    - main
+    - tags
+
+# =============================================================================
+# PAGES STAGE (GitLab Pages Documentation)
+# =============================================================================
+
+pages:
+  extends: .python-base
+  stage: pages
+  script:
+    - uv pip install mkdocs mkdocs-material mkdocs-mermaid2-plugin
+    - mkdocs build --strict --site-dir public
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+  environment:
+    name: documentation
+    url: https://tinyland.gitlab.io/projects/darwin-mgmt-nic-configurator
+
+# =============================================================================
+# SECURITY (GitLab Templates)
+# =============================================================================
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+
+sast:
+  stage: test
+
+secret_detection:
+  stage: test
+
+dependency_scanning:
+  stage: test

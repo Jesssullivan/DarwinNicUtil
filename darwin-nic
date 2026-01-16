@@ -1,0 +1,427 @@
+#!/usr/bin/env python3
+"""
+Darwin Management NIC Configurator - Single Entry Point
+
+A clean, buildable utility for configuring USB NICs on macOS/Linux
+with WiFi preservation and hardware-aware interference mitigation.
+
+Usage:
+    darwin-nic configure           # Configure USB NIC (CLI mode)
+    darwin-nic setup               # Interactive guided setup
+    darwin-nic status              # Show current network status
+    darwin-nic dashboard           # Show real-time monitoring
+    darwin-nic test                # Test connectivity
+    darwin-nic restore            # Restore backup configuration
+"""
+
+import sys
+import subprocess
+from pathlib import Path
+
+def check_and_install_dependencies():
+    """Check if required dependencies are available, install if needed"""
+    required_modules = ['rich', 'typing_extensions']
+    missing_modules = []
+    
+    for module in required_modules:
+        try:
+            __import__(module)
+        except ImportError:
+            missing_modules.append(module)
+    
+    if missing_modules:
+        print(f"[*] Installing missing dependencies: {', '.join(missing_modules)}")
+        try:
+            subprocess.check_call([
+                sys.executable, '-m', 'pip', 'install',
+                'rich>=13.0.0',
+                'typing-extensions>=4.12.0'
+            ])
+            print("[OK] Dependencies installed successfully")
+        except subprocess.CalledProcessError as e:
+            print(f"[FAIL] Failed to install dependencies: {e}")
+            print("[i] Please install manually: pip install rich typing-extensions")
+            sys.exit(1)
+
+# Check dependencies before importing
+check_and_install_dependencies()
+
+# Add src to path for development
+src_path = Path(__file__).parent / "src"
+if src_path.exists():
+    sys.path.insert(0, str(src_path))
+
+from darwin_mgmt_nic.cli import main as cli_main
+from darwin_mgmt_nic.guided_setup import main as guided_main
+from darwin_mgmt_nic.network_manager import NetworkDashboard, WiFiMonitor, ServiceOrderManager
+from darwin_mgmt_nic.settings import load_settings, init_config, get_config_paths, Settings
+import logging
+import argparse
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+def cmd_configure(args, settings: Settings):
+    """Configure USB NIC using CLI mode"""
+    # If profile specified, load profile settings
+    device_ip = args.device_ip
+    laptop_ip = args.laptop_ip
+    netmask = args.netmask
+    mgmt_network = args.mgmt_network
+    device_name = args.device_name
+
+    if args.profile and args.profile in settings.profiles:
+        profile = settings.profiles[args.profile]
+        # Only use profile values if CLI didn't override (using sentinel values)
+        if device_ip == '__PROFILE__':
+            device_ip = profile.device_ip
+        if laptop_ip == '__PROFILE__':
+            laptop_ip = profile.laptop_ip
+        netmask = profile.netmask or netmask
+        mgmt_network = profile.mgmt_network or mgmt_network
+        device_name = profile.device_name or device_name
+        print(f"[*] Using profile: {args.profile}")
+    elif args.profile:
+        print(f"[WARN] Profile '{args.profile}' not found, using provided values")
+
+    # Validate required IPs are set
+    if device_ip == '__PROFILE__' or laptop_ip == '__PROFILE__':
+        print("[FAIL] --device-ip and --laptop-ip are required (or use --profile)")
+        return 1
+
+    # Convert args to CLI format
+    sys.argv = [
+        'darwin-mgmt-nic',
+        '--device-ip', device_ip,
+        '--laptop-ip', laptop_ip,
+        '--netmask', netmask,
+        '--mgmt-network', mgmt_network,
+        '--device-name', device_name
+    ]
+
+    if args.dry_run:
+        sys.argv.append('--dry-run')
+    if args.preserve_wifi:
+        sys.argv.append('--preserve-wifi')
+    if args.show_dashboard:
+        sys.argv.append('--show-dashboard')
+
+    cli_main()
+
+def cmd_setup(args):
+    """Run interactive guided setup"""
+    guided_main()
+
+def cmd_status(args):
+    """Show current network status"""
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+    
+    console = Console()
+    
+    # Create dashboard components
+    wifi_monitor = WiFiMonitor()
+    service_manager = ServiceOrderManager()
+    dashboard = NetworkDashboard(wifi_monitor, service_manager)
+    
+    # Display status
+    console.print(Panel(
+        "[bold cyan]Network Status Dashboard[/bold cyan]",
+        title="Darwin Management NIC",
+        border_style="blue"
+    ))
+    
+    dashboard.display_status()
+    
+    # Show WiFi metrics
+    console.print("\n")
+    dashboard.show_connectivity_metrics()
+
+def cmd_dashboard(args):
+    """Show real-time monitoring dashboard"""
+    from rich.console import Console
+    
+    console = Console()
+    wifi_monitor = WiFiMonitor()
+    service_manager = ServiceOrderManager()
+    dashboard = NetworkDashboard(wifi_monitor, service_manager)
+    
+    if args.interference:
+        # Monitor for interference
+        duration = args.duration or 30
+        dashboard.monitor_interference(duration)
+    else:
+        # Show static dashboard
+        dashboard.display_status()
+
+def cmd_test(args):
+    """Test connectivity to management networks"""
+    from rich.console import Console
+    from rich.table import Table
+    
+    console = Console()
+    
+    # Test basic connectivity
+    import subprocess
+    import socket
+    
+    table = Table(title="Connectivity Test Results")
+    table.add_column("Target", style="cyan")
+    table.add_column("Status", style="green")
+    table.add_column("Response Time", style="yellow")
+    
+    # Test local interfaces
+    interfaces = ['en0', 'en1', 'en11']  # Common interfaces
+    for interface in interfaces:
+        try:
+            result = subprocess.run(['ifconfig', interface], capture_output=True, text=True)
+            if result.returncode == 0:
+                table.add_row(f"Interface {interface}", "[OK] Active", "N/A")
+            else:
+                table.add_row(f"Interface {interface}", "[--] Inactive", "N/A")
+        except:
+            table.add_row(f"Interface {interface}", "[??] Unknown", "N/A")
+    
+    # Test connectivity to common management IPs
+    test_ips = ['192.0.2.1', '192.168.1.1', '8.8.8.8']
+    for ip in test_ips:
+        try:
+            result = subprocess.run(['ping', '-c', '1', '-W', '2', ip],
+                                  capture_output=True, text=True)
+            if result.returncode == 0:
+                # Extract time from ping output
+                import re
+                time_match = re.search(r'time=(\d+\.?\d*)', result.stdout)
+                response_time = time_match.group(1) + ' ms' if time_match else 'Unknown'
+                table.add_row(ip, "[OK] Reachable", response_time)
+            else:
+                table.add_row(ip, "[--] Unreachable", "Timeout")
+        except:
+            table.add_row(ip, "[??] Error", "N/A")
+    
+    console.print(table)
+
+def cmd_restore(args):
+    """Restore backup configuration"""
+    from darwin_mgmt_nic.network_manager import ServiceOrderManager
+
+    service_manager = ServiceOrderManager()
+
+    print("[*] Restoring network configuration...")
+
+    # Restore service order
+    if service_manager.restore_service_order():
+        print("[OK] Service order restored")
+    else:
+        print("[FAIL] Failed to restore service order")
+
+    print("[OK] Configuration restore complete")
+
+
+def cmd_show_config(settings: Settings):
+    """Display current configuration and available profiles"""
+    from rich.console import Console
+    from rich.table import Table
+    from rich import box
+
+    console = Console()
+
+    # Show config sources
+    console.print("[bold cyan]Configuration Sources[/bold cyan]")
+    if settings.config_sources:
+        for source in settings.config_sources:
+            console.print(f"  [green][OK][/green] {source}")
+    else:
+        console.print("  [dim]No config files found (using built-in defaults)[/dim]")
+
+    console.print()
+
+    # Show search paths
+    console.print("[bold cyan]Config Search Paths[/bold cyan]")
+    for path in get_config_paths():
+        exists = "[green][OK][/green]" if path.exists() else "[dim]--[/dim]"
+        console.print(f"  {exists} {path}")
+
+    console.print()
+
+    # Show current settings
+    console.print("[bold cyan]Current Settings[/bold cyan]")
+    settings_table = Table(box=box.SIMPLE)
+    settings_table.add_column("Setting", style="cyan")
+    settings_table.add_column("Value", style="white")
+
+    settings_table.add_row("device_ip", settings.device_ip)
+    settings_table.add_row("laptop_ip", settings.laptop_ip)
+    settings_table.add_row("netmask", settings.netmask)
+    settings_table.add_row("mgmt_network", settings.mgmt_network)
+    settings_table.add_row("device_name", settings.device_name)
+    settings_table.add_row("preserve_wifi", str(settings.preserve_wifi))
+    settings_table.add_row("dry_run", str(settings.dry_run))
+
+    if settings.default_profile:
+        settings_table.add_row("default_profile", settings.default_profile)
+
+    console.print(settings_table)
+
+    # Show profiles
+    if settings.profiles:
+        console.print()
+        console.print("[bold cyan]Available Profiles[/bold cyan]")
+        profiles_table = Table(box=box.SIMPLE)
+        profiles_table.add_column("Profile", style="cyan")
+        profiles_table.add_column("Device IP", style="white")
+        profiles_table.add_column("Device Name", style="dim")
+
+        for name, profile in settings.profiles.items():
+            default_marker = " [yellow]*[/yellow]" if name == settings.default_profile else ""
+            profiles_table.add_row(
+                f"{name}{default_marker}",
+                profile.device_ip,
+                profile.device_name
+            )
+
+        console.print(profiles_table)
+        console.print("[dim]* = default profile[/dim]")
+
+
+def cmd_init_config():
+    """Initialize user config file with defaults"""
+    config_path = init_config()
+    if config_path:
+        print(f"[OK] Config file created: {config_path}")
+        print("\nEdit this file to add your network profiles.")
+    else:
+        print("[WARN] Config file already exists.")
+        print("Use 'darwin-nic config' to view current settings.")
+
+
+def cmd_list_profiles(settings: Settings):
+    """List available profiles"""
+    from rich.console import Console
+    console = Console()
+
+    if not settings.profiles:
+        console.print("[yellow]No profiles configured.[/yellow]")
+        console.print("Run [cyan]darwin-nic init-config[/cyan] to create a config file.")
+        return
+
+    console.print("[bold cyan]Available Profiles[/bold cyan]\n")
+
+    for name, profile in settings.profiles.items():
+        default = " [yellow](default)[/yellow]" if name == settings.default_profile else ""
+        console.print(f"[bold]{name}[/bold]{default}")
+        console.print(f"  Device: {profile.device_name}")
+        console.print(f"  IP: {profile.device_ip} -> {profile.laptop_ip}")
+        console.print(f"  Mgmt: {profile.mgmt_network}")
+        if profile.description:
+            console.print(f"  [dim]{profile.description}[/dim]")
+        console.print()
+
+def main():
+    """Main entry point"""
+    # Load settings early for profile names in help text
+    settings = load_settings()
+
+    parser = argparse.ArgumentParser(
+        prog='darwin-nic',
+        description='Darwin Management NIC Configurator - USB NIC setup with WiFi preservation',
+        epilog="""
+Examples:
+  darwin-nic configure --profile homelab
+  darwin-nic configure --device-ip 192.0.2.1 --laptop-ip 192.0.2.100
+  darwin-nic setup
+  darwin-nic status
+  darwin-nic config
+  darwin-nic profiles
+  darwin-nic init-config
+        """,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    parser.add_argument('--version', action='version', version='%(prog)s 2.0.0')
+
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+
+    # Configure command
+    configure_parser = subparsers.add_parser('configure', help='Configure USB NIC')
+    configure_parser.add_argument('--profile', metavar='NAME',
+                                  help='Use named profile from config file')
+    configure_parser.add_argument('--device-ip', default='__PROFILE__',
+                                  help='Management device IP (required unless using --profile)')
+    configure_parser.add_argument('--laptop-ip', default='__PROFILE__',
+                                  help='Laptop USB NIC IP (required unless using --profile)')
+    configure_parser.add_argument('--netmask', default='255.255.255.0', help='Network mask')
+    configure_parser.add_argument('--mgmt-network', default='198.51.100.0/24', help='Management network')
+    configure_parser.add_argument('--device-name', default='Network Device', help='Device name')
+    configure_parser.add_argument('--dry-run', action='store_true', help='Show what would be done')
+    configure_parser.add_argument('--preserve-wifi', action='store_true', help='Preserve WiFi connectivity')
+    configure_parser.add_argument('--show-dashboard', action='store_true', help='Show network dashboard')
+
+    # Setup command
+    setup_parser = subparsers.add_parser('setup', help='Interactive guided setup')
+
+    # Status command
+    status_parser = subparsers.add_parser('status', help='Show network status')
+
+    # Dashboard command
+    dashboard_parser = subparsers.add_parser('dashboard', help='Show monitoring dashboard')
+    dashboard_parser.add_argument('--interference', action='store_true', help='Monitor for interference')
+    dashboard_parser.add_argument('--duration', type=int, help='Monitoring duration in seconds')
+
+    # Test command
+    test_parser = subparsers.add_parser('test', help='Test connectivity')
+
+    # Restore command
+    restore_parser = subparsers.add_parser('restore', help='Restore backup configuration')
+
+    # Config management commands
+    config_parser = subparsers.add_parser('config', help='Show current configuration and profiles')
+    init_config_parser = subparsers.add_parser('init-config', help='Initialize user config file')
+    profiles_parser = subparsers.add_parser('profiles', help='List available profiles')
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        return 1
+
+    # Execute command
+    try:
+        if args.command == 'configure':
+            cmd_configure(args, settings)
+        elif args.command == 'setup':
+            cmd_setup(args)
+        elif args.command == 'status':
+            cmd_status(args)
+        elif args.command == 'dashboard':
+            cmd_dashboard(args)
+        elif args.command == 'test':
+            cmd_test(args)
+        elif args.command == 'restore':
+            cmd_restore(args)
+        elif args.command == 'config':
+            cmd_show_config(settings)
+        elif args.command == 'init-config':
+            cmd_init_config()
+        elif args.command == 'profiles':
+            cmd_list_profiles(settings)
+        else:
+            print(f"Unknown command: {args.command}")
+            return 1
+    except KeyboardInterrupt:
+        print("\n\n[!] Operation cancelled by user")
+        return 1
+    except Exception as e:
+        print(f"[FAIL] Error: {e}")
+        return 1
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

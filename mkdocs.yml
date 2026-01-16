@@ -1,0 +1,61 @@
+site_name: Darwin Management NIC Configurator
+site_description: USB network interface configurator with WiFi preservation
+site_url: https://tinyland.gitlab.io/projects/darwin-mgmt-nic-configurator
+repo_url: https://gitlab.com/tinyland/projects/darwin-mgmt-nic-configurator
+repo_name: tinyland/darwin-mgmt-nic-configurator
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search
+  - mermaid2
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Quick Start: quickstart.md
+  - Architecture: architecture.md
+  - CLI Reference: cli.md
+  - Development: development.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/gitlab
+      link: https://gitlab.com/tinyland/projects/darwin-mgmt-nic-configurator
