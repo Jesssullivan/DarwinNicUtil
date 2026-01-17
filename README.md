@@ -2,7 +2,7 @@
 
 Configure USB network interfaces for out-of-band management access with controller WiFi preservation.
 
-*do you regularly find yourself brazenly plugging random networky shit into random computers in the basement?  If the victim device is a mac, I am usually soon thereafter up a creek with borgled network configuration due to various annoyances like sophos, paloalto, tailscale, nebula and other silly network things running on the macs in my life.  if this sounds familiar, here we are*
+*do you regularly find yourself brazenly plugging random networky shit into random computers in the basement?  If the victim device is a mac, I am usually soon thereafter up a creek with borgled network configuration due to* ***various annoyances like abr (admin by request) sophos (so many, bleugh), paloalto (oof!), tailscale, nebula, random CNIs and other silly network things*** *running on the macs in my life.  if this sounds familiar, here we are*
 
 ## Usage
 
