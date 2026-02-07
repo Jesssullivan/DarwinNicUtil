@@ -82,6 +82,11 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+# Nix
+result
+result-*
+.direnv/
+
 # Project specific
 assets/*.backup
 *.old
