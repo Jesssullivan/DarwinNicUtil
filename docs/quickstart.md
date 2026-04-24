@@ -8,7 +8,7 @@ Get up and running in under 5 minutes.
 
     ```bash
     git clone https://github.com/Jesssullivan/DarwinNicUtil.git
-    cd darwin-mgmt-nic-configurator
+    cd DarwinNicUtil
 
     python3 -m venv venv
     source venv/bin/activate

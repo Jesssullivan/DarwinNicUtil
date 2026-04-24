@@ -5,7 +5,7 @@
 ```bash
 # Clone repository
 git clone https://github.com/Jesssullivan/DarwinNicUtil.git
-cd darwin-mgmt-nic-configurator
+cd DarwinNicUtil
 
 # Create virtual environment (Python 3.14+)
 python3 -m venv venv
@@ -18,7 +18,7 @@ pip install -e ".[dev]"
 ## Project Structure
 
 ```
-darwin-mgmt-nic-configurator/
+DarwinNicUtil/
 ├── darwin-nic              # Main entry point
 ├── darwin-nic-venv         # Venv wrapper
 ├── src/darwin_mgmt_nic/    # Source code
