@@ -4,8 +4,8 @@
 
 ```bash
 # Clone repository
-git clone https://gitlab.com/tinyland/projects/darwin-mgmt-nic-configurator.git
-cd darwin-mgmt-nic-configurator
+git clone https://github.com/Jesssullivan/DarwinNicUtil.git
+cd DarwinNicUtil
 
 # Create virtual environment (Python 3.14+)
 python3 -m venv venv
@@ -18,7 +18,7 @@ pip install -e ".[dev]"
 ## Project Structure
 
 ```
-darwin-mgmt-nic-configurator/
+DarwinNicUtil/
 ├── darwin-nic              # Main entry point
 ├── darwin-nic-venv         # Venv wrapper
 ├── src/darwin_mgmt_nic/    # Source code
@@ -215,7 +215,7 @@ flowchart LR
 6. Run tests: `./scripts/run_tests.sh`
 7. Commit: `git commit -m 'Add amazing feature'`
 8. Push: `git push origin feature/amazing-feature`
-9. Open Merge Request
+9. Open a pull request
 
 ### Commit Messages
 

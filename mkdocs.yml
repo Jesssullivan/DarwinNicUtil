@@ -1,8 +1,8 @@
 site_name: Darwin Management NIC Configurator
 site_description: USB network interface configurator with WiFi preservation
-site_url: https://tinyland.gitlab.io/projects/darwin-mgmt-nic-configurator
-repo_url: https://gitlab.com/tinyland/projects/darwin-mgmt-nic-configurator
-repo_name: tinyland/darwin-mgmt-nic-configurator
+site_url: https://jesssullivan.github.io/DarwinNicUtil
+repo_url: https://github.com/Jesssullivan/DarwinNicUtil
+repo_name: Jesssullivan/DarwinNicUtil
 
 theme:
   name: material
@@ -57,5 +57,5 @@ nav:
 
 extra:
   social:
-    - icon: fontawesome/brands/gitlab
-      link: https://gitlab.com/tinyland/projects/darwin-mgmt-nic-configurator
+    - icon: fontawesome/brands/github
+      link: https://github.com/Jesssullivan/DarwinNicUtil

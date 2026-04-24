@@ -52,9 +52,9 @@ dev = [
 darwin-nic = "darwin_mgmt_nic.app:main"
 
 [project.urls]
-Homepage = "https://gitlab.com/tinyland/projects/darwin-mgmt-nic-configurator"
-Repository = "https://gitlab.com/tinyland/projects/darwin-mgmt-nic-configurator.git"
-Issues = "https://gitlab.com/tinyland/projects/darwin-mgmt-nic-configurator/-/issues"
+Homepage = "https://github.com/Jesssullivan/DarwinNicUtil"
+Repository = "https://github.com/Jesssullivan/DarwinNicUtil.git"
+Issues = "https://github.com/Jesssullivan/DarwinNicUtil/issues"
 
 [build-system]
 requires = ["hatchling"]

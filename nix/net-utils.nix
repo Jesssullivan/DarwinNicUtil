@@ -9,7 +9,7 @@
   mtr,
   iperf3,
   socat,
-  netcat-openbsd,
+  netcat-openbsd ? null,  # permanently broken on Darwin (Debian Linux-only port)
   # Extended tools
   bandwhich,
   trippy,
@@ -33,8 +33,8 @@ let
     mtr
     iperf3
     socat
-    netcat-openbsd
-  ];
+  ] ++ lib.optional (netcat-openbsd != null && !(netcat-openbsd.meta.broken or false))
+    netcat-openbsd;
 
   extendedTools = lib.optionals enableExtended [
     bandwhich
