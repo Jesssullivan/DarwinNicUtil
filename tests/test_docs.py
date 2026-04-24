@@ -26,3 +26,13 @@ def test_operator_docs_do_not_point_at_retired_gitlab_repository():
     ]
 
     assert stale == []
+
+
+def test_agents_file_keeps_crs_policy_out_of_darwin_tool():
+    agents = (REPO_ROOT / "AGENTS.md").read_text()
+
+    assert "generic `darwin-nic` USB management NIC tool" in agents
+    assert "Do not embed switch secrets" in agents
+    assert "Use the `github` remote" in agents
+    assert "crs309-main" not in agents
+    assert "vault_mikrotik_password" not in agents

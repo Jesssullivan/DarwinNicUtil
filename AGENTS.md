@@ -1,16 +1,17 @@
 # DarwinNicUtil Agent Guide
 
-This repo owns the generic `darwin-nic` USB management NIC tool. It does not own Tinyland switch topology.
+This repo owns the generic `darwin-nic` USB management NIC tool.
 
-## Source Of Truth Boundaries
+## Boundaries
 
-- `DarwinNicUtil` owns macOS/Linux USB NIC detection, configuration, sudo behavior, routing behavior, and diagnostics.
-- `crs310-8g-2s-in` owns CRS309/CRS310 hostnames, RouterOS policy, OOB MAC addresses, switch credentials, and Tinyland-specific bastion runbooks.
+- Owns macOS/Linux USB NIC detection, configuration, sudo behavior, routing behavior, and diagnostics.
+- Does not own Tinyland switch topology. `crs310-8g-2s-in` owns CRS hostnames, RouterOS policy, OOB MAC addresses, switch credentials, and Tinyland-specific bastion runbooks.
 - Do not embed switch secrets, SOPS paths, or Tinyland-specific RouterOS policy in this repo.
+- Use the `github` remote for GitHub PR work. Local `origin` may be a non-bare `yoga` checkout.
 
 ## Bastion Mode
 
-For hardened `tailnet -> bastion host -> USB OOB NIC -> network gear` workflows, this tool should provide:
+For `tailnet -> bastion host -> USB OOB NIC -> network gear` workflows, provide:
 
 - profile-driven USB NIC setup with Wi-Fi preservation;
 - clear dry-run/status output before privileged changes;
