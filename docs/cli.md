@@ -205,8 +205,8 @@ preserve_wifi = true
 [profiles.homelab]
 device_ip = "192.168.88.1"
 laptop_ip = "192.168.88.100"
-mgmt_network = "192.168.10.0/24"
-device_name = "Management Switch"
+mgmt_network = "192.168.88.0/24"
+device_name = "CRS309 Bastion"
 description = "Home lab network"
 
 [profiles.datacenter]

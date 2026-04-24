@@ -4,6 +4,7 @@ Tests for macOS-specific implementation
 
 import pytest
 from unittest.mock import MagicMock, patch
+from darwin_mgmt_nic.config import NetworkInterface
 from darwin_mgmt_nic.macos import MacOSUSBNICDetector
 
 
@@ -123,6 +124,120 @@ class TestMacOSUSBNICDetector:
 
         with pytest.raises(ValueError, match="protected"):
             detector.configure_interface("en0", "192.0.2.100", "255.255.255.0")
+
+    @patch("darwin_mgmt_nic.macos.run_sudo_command_tui_safe")
+    @patch("darwin_mgmt_nic.macos.run_sudo_command")
+    @patch.object(MacOSUSBNICDetector, "cleanup_conflicting_ips")
+    @patch.object(MacOSUSBNICDetector, "validate_interface_for_config")
+    @patch.object(MacOSUSBNICDetector, "_get_interface_ip")
+    def test_configure_interface_non_tui_uses_interactive_runner(
+        self,
+        mock_get_ip,
+        mock_validate,
+        mock_cleanup,
+        mock_run_sudo,
+        mock_run_sudo_tui,
+    ):
+        """Non-TUI CLI mode should use the interactive sudo runner."""
+        mock_get_ip.side_effect = [None, "192.0.2.100"]
+
+        detector = MacOSUSBNICDetector(tui_mode=False)
+
+        assert detector.configure_interface("en7", "192.0.2.100", "255.255.255.0")
+        mock_run_sudo.assert_called_once_with(
+            ["ifconfig", "en7", "192.0.2.100", "netmask", "255.255.255.0", "up"],
+            timeout=30,
+            check=True,
+        )
+        mock_run_sudo_tui.assert_not_called()
+
+    @patch("darwin_mgmt_nic.macos.run_sudo_command_tui_safe")
+    @patch("darwin_mgmt_nic.macos.run_sudo_command")
+    @patch.object(MacOSUSBNICDetector, "cleanup_conflicting_ips")
+    @patch.object(MacOSUSBNICDetector, "validate_interface_for_config")
+    @patch.object(MacOSUSBNICDetector, "_get_interface_ip")
+    def test_configure_interface_tui_uses_tui_runner(
+        self,
+        mock_get_ip,
+        mock_validate,
+        mock_cleanup,
+        mock_run_sudo,
+        mock_run_sudo_tui,
+    ):
+        """TUI mode should keep using the non-interactive TUI-safe runner."""
+        mock_get_ip.side_effect = [None, "192.0.2.100"]
+
+        detector = MacOSUSBNICDetector(tui_mode=True)
+
+        assert detector.configure_interface("en7", "192.0.2.100", "255.255.255.0")
+        mock_run_sudo_tui.assert_called_once_with(
+            ["ifconfig", "en7", "192.0.2.100", "netmask", "255.255.255.0", "up"],
+            timeout=30,
+            check=True,
+            tui_active=True,
+        )
+        mock_run_sudo.assert_not_called()
+
+    @patch("subprocess.run")
+    def test_get_bastion_diagnostics_detects_nwi_necp_and_tailscale(self, mock_run):
+        """Bastion diagnostics should surface the same host-side symptoms we saw on pzm."""
+        def run_side_effect(cmd, *args, **kwargs):
+            if cmd[:2] == ["scutil", "--nwi"]:
+                return MagicMock(
+                    returncode=0,
+                    stdout=(
+                        "Network information\n\n"
+                        "IPv4 network interface information\n"
+                        "     en1 : flags      : 0x5 (IPv4,DNS)\n"
+                        "           address    : 192.168.30.112\n\n"
+                        "Network interfaces: en1 en0\n"
+                    ),
+                )
+            if cmd[:2] == ["systemextensionsctl", "list"]:
+                return MagicMock(
+                    returncode=0,
+                    stdout=(
+                        "1 extension(s)\n"
+                        "--- com.apple.system_extension.network_extension\n"
+                        "* * W5364U7YZB io.tailscale.ipn.macsys.network-extension "
+                        "(1.87.103/101.87.103) Tailscale Network Extension [activated enabled]\n"
+                    ),
+                )
+            if cmd[:2] == ["log", "show"]:
+                return MagicMock(
+                    returncode=0,
+                    stdout=(
+                        "2026-04-24 11:58:38.135 Df kernel[0:140ce66] "
+                        "tcp drop outgoing interface: en9 reason: NECP\n"
+                    ),
+                )
+            raise AssertionError(f"Unexpected command: {cmd}")
+
+        mock_run.side_effect = run_side_effect
+
+        detector = MacOSUSBNICDetector()
+        detector.detect_interfaces = MagicMock(
+            return_value=[
+                NetworkInterface(
+                    name="en9",
+                    hardware_port="USB 10/100/1000 LAN",
+                    is_usb=True,
+                    is_active=True,
+                    is_protected=False,
+                    current_ip="192.168.88.100",
+                    mac_address="a0:ce:c8:d9:c7:5c",
+                    vendor="Realtek",
+                )
+            ]
+        )
+
+        diagnostics = detector.get_bastion_diagnostics()
+
+        assert diagnostics.usb_interfaces_with_ip == ["en9"]
+        assert diagnostics.nwi_interfaces == ["en1", "en0"]
+        assert diagnostics.missing_from_nwi == ["en9"]
+        assert diagnostics.tailscale_extension_active is True
+        assert diagnostics.recent_necp_drop is True
 
     @patch('subprocess.run')
     def test_add_static_route_already_exists(self, mock_run):

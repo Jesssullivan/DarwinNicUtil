@@ -310,15 +310,15 @@ dry_run = false
 [profiles.homelab]
 device_ip = "192.168.88.1"
 laptop_ip = "192.168.88.100"
-mgmt_network = "192.168.10.0/24"
-device_name = "Bastion Switch"
+mgmt_network = "192.168.88.0/24"
+device_name = "CRS309 Bastion"
 description = "Home lab management network"
 # device_type = "mikrotik"  # Optional: for future device-specific features
 
 [profiles.homelab-secondary]
 device_ip = "192.168.88.2"
 laptop_ip = "192.168.88.100"
-mgmt_network = "192.168.10.0/24"
+mgmt_network = "192.168.88.0/24"
 device_name = "Secondary Switch"
 description = "Secondary management target"
 

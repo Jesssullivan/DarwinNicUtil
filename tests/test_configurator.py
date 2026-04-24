@@ -3,7 +3,7 @@ Tests for main configurator
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 from darwin_mgmt_nic.configurator import USBNICConfigurator
 
 
@@ -103,40 +103,45 @@ class TestUSBNICConfigurator:
         configurator = USBNICConfigurator(sample_network_config, dry_run=False)
         assert not configurator.confirm_configuration(protected_interface)
 
-    @patch('builtins.input', return_value='yes')
+    @patch('darwin_mgmt_nic.configurator.Confirm.ask', return_value=True)
     def test_confirm_configuration_user_accepts(
         self,
-        mock_input,
+        mock_confirm,
         sample_network_config,
         usb_interface_active
     ):
         """Test user accepts configuration"""
         configurator = USBNICConfigurator(sample_network_config, dry_run=False)
         assert configurator.confirm_configuration(usb_interface_active)
+        mock_confirm.assert_called_once_with(
+            "Proceed with configuration?",
+            default=True,
+            console=ANY,
+        )
 
-    @patch('builtins.input', return_value='no')
+    @patch('darwin_mgmt_nic.configurator.Confirm.ask', return_value=False)
     def test_confirm_configuration_user_rejects(
         self,
-        mock_input,
+        mock_confirm,
         sample_network_config,
         usb_interface_active
     ):
         """Test user rejects configuration"""
         configurator = USBNICConfigurator(sample_network_config, dry_run=False)
         assert not configurator.confirm_configuration(usb_interface_active)
+        mock_confirm.assert_called_once()
 
-    @patch('builtins.input', side_effect=['maybe', 'invalid', 'yes'])
-    def test_confirm_configuration_invalid_input(
+    @patch('darwin_mgmt_nic.configurator.Confirm.ask', return_value=True)
+    def test_confirm_configuration_uses_rich_confirm(
         self,
-        mock_input,
+        mock_confirm,
         sample_network_config,
         usb_interface_active
     ):
-        """Test handling invalid user input"""
+        """Test configurator delegates interactive confirmation to Rich."""
         configurator = USBNICConfigurator(sample_network_config, dry_run=False)
         assert configurator.confirm_configuration(usb_interface_active)
-        # Should have been called 3 times
-        assert mock_input.call_count == 3
+        mock_confirm.assert_called_once()
 
     def test_configure_dry_run(self, sample_network_config, usb_interface_active):
         """Test dry-run configuration (no actual changes)"""
@@ -156,10 +161,10 @@ class TestUSBNICConfigurator:
         mock_detector.configure_interface.assert_not_called()
         mock_detector.add_static_route.assert_not_called()
 
-    @patch('builtins.input', return_value='yes')
+    @patch('darwin_mgmt_nic.configurator.Confirm.ask', return_value=True)
     def test_configure_success(
         self,
-        mock_input,
+        mock_confirm,
         sample_network_config,
         usb_interface_active
     ):
@@ -167,7 +172,6 @@ class TestUSBNICConfigurator:
         mock_detector = MagicMock()
         mock_detector.detect_interfaces.return_value = [usb_interface_active]
         mock_detector.configure_interface.return_value = True
-        mock_detector.add_static_route.return_value = True
         mock_detector.test_connectivity.return_value = True
 
         configurator = USBNICConfigurator(
@@ -175,18 +179,24 @@ class TestUSBNICConfigurator:
             dry_run=False,
             detector=mock_detector
         )
+        configurator.route_manager = MagicMock()
 
         result = configurator.configure()
         assert result is True
 
         # Verify methods were called
         mock_detector.configure_interface.assert_called_once()
-        mock_detector.add_static_route.assert_called_once()
+        configurator.route_manager.add_management_route.assert_called_once_with(
+            sample_network_config.mgmt_network,
+            usb_interface_active.name,
+            sample_network_config.device_ip,
+        )
+        mock_confirm.assert_called_once()
 
-    @patch('builtins.input', return_value='yes')
+    @patch('darwin_mgmt_nic.configurator.Confirm.ask', return_value=True)
     def test_configure_failure(
         self,
-        mock_input,
+        mock_confirm,
         sample_network_config,
         usb_interface_active
     ):
@@ -200,6 +210,9 @@ class TestUSBNICConfigurator:
             dry_run=False,
             detector=mock_detector
         )
+        configurator.route_manager = MagicMock()
 
         result = configurator.configure()
         assert result is False
+        configurator.route_manager.add_management_route.assert_not_called()
+        mock_confirm.assert_called_once()

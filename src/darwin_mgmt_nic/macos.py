@@ -7,6 +7,7 @@ import re
 import logging
 import os
 import sys
+from dataclasses import dataclass
 from typing import Optional, Sequence
 from rich.console import Console
 from rich.prompt import Prompt
@@ -16,6 +17,17 @@ from .config import NetworkInterface, InterfaceName, IPAddress
 
 logger = logging.getLogger(__name__)
 console = Console()
+
+
+@dataclass(frozen=True, slots=True)
+class BastionDiagnostics:
+    """High-signal bastion-mode facts for USB OOB troubleshooting."""
+
+    usb_interfaces_with_ip: list[str]
+    nwi_interfaces: list[str]
+    missing_from_nwi: list[str]
+    tailscale_extension_active: bool
+    recent_necp_drop: bool
 
 
 def run_sudo_command(cmd: Sequence[str], timeout: int = 30, check: bool = True) -> subprocess.CompletedProcess:
@@ -153,6 +165,27 @@ class MacOSUSBNICDetector(USBNICDetector):
             tui_mode: If True, use TUI-safe sudo commands (assumes pre-auth)
         """
         self.tui_mode = tui_mode
+
+    def _run_privileged_command(
+        self,
+        cmd: Sequence[str],
+        timeout: int = 30,
+        check: bool = True,
+    ) -> subprocess.CompletedProcess:
+        """
+        Run a privileged command using the right sudo contract for the current mode.
+
+        Non-TUI CLI mode should preserve interactive sudo behavior.
+        TUI mode assumes pre-authenticated sudo and must avoid terminal corruption.
+        """
+        if self.tui_mode:
+            return run_sudo_command_tui_safe(
+                cmd,
+                timeout=timeout,
+                check=check,
+                tui_active=True,
+            )
+        return run_sudo_command(cmd, timeout=timeout, check=check)
 
     def detect_interfaces(self) -> Sequence[NetworkInterface]:
         """
@@ -377,11 +410,10 @@ class MacOSUSBNICDetector(USBNICDetector):
             if iface.current_ip == target_ip:
                 logger.info(f"[*] Removing conflicting IP {target_ip} from {iface.name}")
                 try:
-                    run_sudo_command_tui_safe(
+                    self._run_privileged_command(
                         ["ifconfig", iface.name, target_ip, "-alias"],
                         check=False,
                         timeout=10,
-                        tui_active=self.tui_mode
                     )
                 except Exception as e:
                     logger.warning(f"Failed to remove IP from {iface.name}: {e}")
@@ -404,19 +436,17 @@ class MacOSUSBNICDetector(USBNICDetector):
             existing_ip = self._get_interface_ip(interface)
             if existing_ip:
                 logger.info(f"Removing existing IP {existing_ip} from {interface}")
-                run_sudo_command_tui_safe(
+                self._run_privileged_command(
                     ["ifconfig", interface, existing_ip, "-alias"],
                     check=False,
                     timeout=30,
-                    tui_active=self.tui_mode
                 )
 
             # Configure new IP
             logger.info(f"Configuring {interface}: {ip}/{netmask}")
-            run_sudo_command_tui_safe(
+            self._run_privileged_command(
                 ["ifconfig", interface, ip, "netmask", netmask, "up"],
                 timeout=30,
-                tui_active=self.tui_mode
             )
 
             # Verify configuration
@@ -450,10 +480,9 @@ class MacOSUSBNICDetector(USBNICDetector):
 
             # Add route
             logger.info(f"Adding static route: {network} via {gateway}")
-            run_sudo_command_tui_safe(
+            self._run_privileged_command(
                 ["route", "add", "-net", network, gateway],
                 timeout=30,
-                tui_active=self.tui_mode
             )
 
             logger.info(f"[OK] Static route added: {network} via {gateway}")
@@ -489,3 +518,88 @@ class MacOSUSBNICDetector(USBNICDetector):
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             logger.error(f"[FAIL] Connectivity test failed: {e}")
             return False
+
+    def get_bastion_diagnostics(self) -> BastionDiagnostics:
+        """
+        Collect high-signal macOS bastion facts for USB OOB debugging.
+
+        This is intentionally best-effort and should never raise on operator hosts.
+        """
+        usb_interfaces_with_ip = [
+            iface.name
+            for iface in self.detect_interfaces()
+            if iface.is_usb and iface.current_ip
+        ]
+        nwi_interfaces = self._get_nwi_interfaces()
+        missing_from_nwi = [
+            interface for interface in usb_interfaces_with_ip if interface not in nwi_interfaces
+        ]
+
+        return BastionDiagnostics(
+            usb_interfaces_with_ip=usb_interfaces_with_ip,
+            nwi_interfaces=nwi_interfaces,
+            missing_from_nwi=missing_from_nwi,
+            tailscale_extension_active=self._tailscale_extension_active(),
+            recent_necp_drop=self._recent_necp_drop_detected(),
+        )
+
+    def _get_nwi_interfaces(self) -> list[str]:
+        """Parse interface membership from `scutil --nwi`."""
+        try:
+            result = subprocess.run(
+                ["scutil", "--nwi"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+        except Exception as e:
+            logger.debug(f"Failed to query scutil --nwi: {e}")
+            return []
+
+        for line in result.stdout.splitlines():
+            if line.startswith("Network interfaces:"):
+                _, interfaces = line.split(":", 1)
+                return [item for item in interfaces.strip().split() if item]
+        return []
+
+    def _tailscale_extension_active(self) -> bool:
+        """Check whether the Tailscale system extension is active."""
+        try:
+            result = subprocess.run(
+                ["systemextensionsctl", "list"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+        except Exception as e:
+            logger.debug(f"Failed to query system extensions: {e}")
+            return False
+
+        return "io.tailscale.ipn.macsys.network-extension" in result.stdout
+
+    def _recent_necp_drop_detected(self) -> bool:
+        """Check recent macOS logs for NECP socket drops on the bastion host."""
+        try:
+            result = subprocess.run(
+                [
+                    "log",
+                    "show",
+                    "--style",
+                    "compact",
+                    "--last",
+                    "10m",
+                    "--predicate",
+                    'eventMessage CONTAINS[c] "tcp drop outgoing" OR eventMessage CONTAINS[c] "reason: NECP"',
+                ],
+                capture_output=True,
+                text=True,
+                timeout=15,
+                check=False,
+            )
+        except Exception as e:
+            logger.debug(f"Failed to query recent logs for NECP drops: {e}")
+            return False
+
+        return "reason: NECP" in result.stdout

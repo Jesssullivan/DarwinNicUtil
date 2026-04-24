@@ -108,6 +108,62 @@ def cmd_status(args: argparse.Namespace) -> None:
     dashboard.display_status()
     console.print("\n")
     dashboard.show_connectivity_metrics()
+    print_bastion_diagnostics(console)
+
+
+def print_bastion_diagnostics(console, detector=None) -> None:
+    """Print high-signal bastion/OOB diagnostics when USB management state exists."""
+    from rich.panel import Panel
+    from rich.table import Table
+
+    from .factory import USBNICDetectorFactory
+
+    detector = detector or USBNICDetectorFactory.create()
+    if not hasattr(detector, "get_bastion_diagnostics"):
+        return
+
+    diagnostics = detector.get_bastion_diagnostics()
+    if not diagnostics.usb_interfaces_with_ip:
+        return
+
+    table = Table(box=None, show_header=False, pad_edge=False)
+    table.add_column(style="cyan")
+    table.add_column(style="white")
+    table.add_row("USB OOB", ", ".join(diagnostics.usb_interfaces_with_ip))
+    table.add_row(
+        "NWI",
+        ", ".join(diagnostics.nwi_interfaces) if diagnostics.nwi_interfaces else "none",
+    )
+    table.add_row(
+        "Missing from NWI",
+        ", ".join(diagnostics.missing_from_nwi) if diagnostics.missing_from_nwi else "none",
+    )
+    table.add_row(
+        "Tailscale sysext",
+        "active" if diagnostics.tailscale_extension_active else "inactive",
+    )
+    table.add_row(
+        "Recent NECP drops",
+        "yes" if diagnostics.recent_necp_drop else "no",
+    )
+
+    console.print(
+        Panel(
+            table,
+            title="Bastion OOB Diagnostics",
+            border_style="magenta",
+        )
+    )
+
+    if diagnostics.missing_from_nwi and diagnostics.tailscale_extension_active:
+        console.print(
+            "[yellow]Warning:[/yellow] USB OOB interface is outside `scutil --nwi` "
+            "while the Tailscale Network Extension is active. Ordinary sockets may be blocked."
+        )
+    if diagnostics.recent_necp_drop:
+        console.print(
+            "[yellow]Warning:[/yellow] Recent macOS logs show `reason: NECP` drops for outbound sockets."
+        )
 
 
 def cmd_dashboard(args: argparse.Namespace) -> None:

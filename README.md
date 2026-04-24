@@ -100,8 +100,8 @@ preserve_wifi = true
 [profiles.homelab]
 device_ip = "192.168.88.1"
 laptop_ip = "192.168.88.100"
-mgmt_network = "192.168.10.0/24"
-device_name = "Bastion Switch"
+mgmt_network = "192.168.88.0/24"
+device_name = "CRS309 Bastion"
 
 [profiles.datacenter]
 device_ip = "10.200.0.1"
@@ -126,10 +126,21 @@ Realtek, ASIX, Belkin, Apple USB Ethernet, StarTech, Cable Matters, TP-Link, and
 - **WiFi Preservation**: Automatically maintains internet connectivity when configuring USB NICs
 - **USB Priority Prevention**: Prevents macOS from routing traffic through USB NIC
 - **Dry-Run Mode**: Preview all changes before applying
+- **Bastion Diagnostics**: `darwin-nic status` now surfaces USB OOB, `scutil --nwi`, Tailscale system-extension, and recent NECP-drop hints
 - Emergency Recovery, os noes!
 ```bash
 ./scripts/emergency-restore.sh
 ```
+
+## Bastion / OOB Notes
+
+For a hardened `tailnet -> bastion host -> USB OOB NIC -> network gear` flow:
+
+- keep your profile `mgmt_network` aligned to the real OOB subnet, not the RFC5737 default
+- use `darwin-nic status` when ordinary sockets fail but raw tools still work
+- if the status output shows the USB interface missing from `scutil --nwi` while the Tailscale Network Extension is active, macOS may be blocking ordinary sockets with NECP even though link and ARP are healthy
+
+For CLI use, non-TUI `darwin-nic configure` now uses the normal interactive sudo path. If you want a non-interactive shell script, pre-authenticate first with `sudo -v` or provide your own wrapper.
 
 ## Helpful stuff
 
@@ -137,6 +148,9 @@ Realtek, ASIX, Belkin, Apple USB Ethernet, StarTech, Cable Matters, TP-Link, and
 # Check if adapter is recognized
 networksetup -listallhardwareports  # macOS
 ip link show                        # Linux
+
+# Inspect bastion/OOB status
+darwin-nic status
 
 # Run with verbose logging
 darwin-nic configure --device-ip <ipv4> --laptop-ip <ipv4> --dry-run

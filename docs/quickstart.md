@@ -79,8 +79,8 @@ default_profile = "homelab"
 [profiles.homelab]
 device_ip = "192.168.88.1"
 laptop_ip = "192.168.88.100"
-mgmt_network = "192.168.10.0/24"
-device_name = "Management Switch"
+mgmt_network = "192.168.88.0/24"
+device_name = "CRS309 Bastion"
 ```
 
 ## CLI Configuration
@@ -122,6 +122,10 @@ darwin-nic configure \
 ./darwin-nic dashboard
 ```
 
+If `status` shows the USB interface missing from `scutil --nwi` while the
+Tailscale system extension is active, ordinary sockets may be getting blocked
+by macOS NECP even though the USB link itself is healthy.
+
 ## Troubleshooting
 
 ### USB Interface Not Detected
@@ -134,8 +138,9 @@ networksetup -listallhardwareports
 ### Permission Denied
 
 ```bash
-# Run with sudo
-sudo ./darwin-nic configure --device-ip 192.0.2.1 --laptop-ip 192.0.2.100
+# Pre-authenticate sudo, then rerun configure
+sudo -v
+./darwin-nic configure --device-ip 192.0.2.1 --laptop-ip 192.0.2.100
 ```
 
 ### Emergency Recovery
