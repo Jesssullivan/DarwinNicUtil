@@ -7,7 +7,7 @@ Get up and running in under 5 minutes.
 === "Clone & Run"
 
     ```bash
-    git clone https://gitlab.com/tinyland/projects/darwin-mgmt-nic-configurator.git
+    git clone https://github.com/Jesssullivan/DarwinNicUtil.git
     cd darwin-mgmt-nic-configurator
 
     python3 -m venv venv
