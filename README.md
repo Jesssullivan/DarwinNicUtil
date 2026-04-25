@@ -161,5 +161,6 @@ Current release artifacts are:
 - MkDocs site artifacts from the docs workflow.
 
 GitHub release, FlakeHub, and docs workflows are present for tag-based
-publication. PyPI publishing and standalone binary distribution remain tracked
-release follow-ups.
+publication. The PyPI trusted-publishing workflow is staged but not documented
+as an install path until the first upload is validated. Standalone binary
+distribution remains a tracked release follow-up.

@@ -79,11 +79,31 @@ The release workflow runs on tags matching `v*.*.*`. It builds the Python
 distribution files and attaches only the wheel and source distribution to the
 GitHub Release.
 
+## PyPI Trusted Publishing
+
+PyPI publication is staged in the release workflow, but it is not a supported
+install path until the first trusted-publishing upload succeeds.
+
+The package name planned for PyPI is `darwin-mgmt-nic-configurator`. Configure
+a PyPI pending publisher before pushing the first PyPI-enabled release tag:
+
+| Field | Value |
+|-------|-------|
+| Owner | `Jesssullivan` |
+| Repository | `DarwinNicUtil` |
+| Workflow | `release.yml` |
+| Environment | `pypi` |
+
+The release workflow uses GitHub OIDC with `pypa/gh-action-pypi-publish` and
+does not use a stored PyPI API token. Keep README and quickstart install
+commands focused on Nix, FlakeHub, wheel/source, and source checkout paths
+until a real PyPI upload is validated.
+
 ## Not Yet Primary Artifacts
 
 | Surface | Current status |
 |---------|----------------|
-| PyPI | Planned through trusted publishing; tracked in [GitHub #11](https://github.com/Jesssullivan/DarwinNicUtil/issues/11) |
+| PyPI | Trusted-publishing workflow is staged; install docs remain pending until first upload is validated, tracked in [GitHub #11](https://github.com/Jesssullivan/DarwinNicUtil/issues/11) |
 | Standalone binary | PyInstaller spec exists, but binary releases are not validated yet; tracked in [GitHub #9](https://github.com/Jesssullivan/DarwinNicUtil/issues/9) |
 | Homebrew | Deferred; there is no active DarwinNicUtil tap/formula path until PyPI or standalone artifacts are proven, with the decision recorded in [GitHub #10](https://github.com/Jesssullivan/DarwinNicUtil/issues/10) |
 | Bazel / BCR | Not a primary install path; evaluate only if a real downstream Bazel/Bzlmod consumer needs it, tracked in [GitHub #17](https://github.com/Jesssullivan/DarwinNicUtil/issues/17) |

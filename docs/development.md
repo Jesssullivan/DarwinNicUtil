@@ -89,7 +89,7 @@ GitHub Actions now own the public validation path:
 | `ci.yml` | Format, lint, type-check, tests, docs build, package build |
 | `secret-detection.yml` | Gitleaks and TruffleHog scanning |
 | `docs.yml` | MkDocs build and GitHub Pages artifact upload |
-| `release.yml` | Tag-triggered wheel/source distribution and GitHub Release |
+| `release.yml` | Tag-triggered wheel/source distribution, GitHub Release, and staged PyPI publish |
 
 GitLab CI remains in the repository for compatibility, but GitHub is the
 release-facing surface.
@@ -114,6 +114,7 @@ git push origin v2.1.0
 ```
 
 The release workflow attaches only wheel and source distribution files from
-`dist/` to the GitHub Release. PyPI trusted publishing and standalone binary
-distribution are follow-up release tasks unless they are explicitly enabled
-before the tag.
+`dist/` to the GitHub Release. It also contains the PyPI trusted-publishing job
+for tag builds; configure the PyPI pending publisher for
+`release.yml`/`pypi` before relying on it. Standalone binary distribution
+remains a follow-up release task.

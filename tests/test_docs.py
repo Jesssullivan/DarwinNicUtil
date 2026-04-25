@@ -133,11 +133,33 @@ def test_artifacts_docs_match_current_release_policy():
     assert "FlakeHub releases are `v2.1.0`" in artifacts
     assert "nix run github:Jesssullivan/DarwinNicUtil -- status" in artifacts
     assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" in readme
-    assert "PyPI publishing and standalone binary distribution remain tracked" in readme
+    assert "PyPI trusted-publishing workflow is staged" in readme
+    assert "not documented" in readme
+    assert "until the first upload is validated" in readme
 
     if flakehub_workflow_path.exists():
         flakehub_workflow = flakehub_workflow_path.read_text()
         assert "DeterminateSystems/flakehub-push@main" in flakehub_workflow
+
+
+def test_pypi_publish_surface_is_staged_but_not_overclaimed():
+    artifacts = (REPO_ROOT / "docs" / "artifacts.md").read_text()
+    release_workflow = (REPO_ROOT / ".github" / "workflows" / "release.yml").read_text()
+    readme = (REPO_ROOT / "README.md").read_text()
+    quickstart = (REPO_ROOT / "docs" / "quickstart.md").read_text()
+
+    assert "PyPI Trusted Publishing" in artifacts
+    assert "darwin-mgmt-nic-configurator" in artifacts
+    assert "release.yml" in artifacts
+    assert "`pypi`" in artifacts
+    assert "pypa/gh-action-pypi-publish@release/v1" in release_workflow
+    assert "id-token: write" in release_workflow
+    assert "environment:" in release_workflow
+    assert "name: pypi" in release_workflow
+    assert "username:" not in release_workflow
+    assert "password:" not in release_workflow
+    assert "pipx install darwin-mgmt-nic-configurator" not in readme
+    assert "pipx install darwin-mgmt-nic-configurator" not in quickstart
 
 
 def test_example_profile_networks_are_internally_consistent():
