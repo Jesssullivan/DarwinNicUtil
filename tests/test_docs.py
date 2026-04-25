@@ -157,6 +157,12 @@ def test_pypi_publish_surface_is_staged_but_not_overclaimed():
 
     assert "PyPI Trusted Publishing" in artifacts
     assert "darwin-mgmt-nic-configurator" in artifacts
+    assert "PyPI cutover checklist" in artifacts
+    assert "Verify the GitHub repository environment is named `pypi`" in artifacts
+    assert "Do not move or reuse the existing `v2.1.0` tag" in artifacts
+    assert "predates the PyPI publishing job" in artifacts
+    assert "curl -fsS https://pypi.org/pypi/darwin-mgmt-nic-configurator/json" in artifacts
+    assert "Only after that verification" in artifacts
     assert "release.yml" in artifacts
     assert "`pypi`" in artifacts
     assert "pypa/gh-action-pypi-publish@release/v1" in release_workflow

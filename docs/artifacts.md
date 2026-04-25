@@ -122,6 +122,26 @@ does not use a stored PyPI API token. Keep README and quickstart install
 commands focused on Nix, FlakeHub, wheel/source, and source checkout paths
 until a real PyPI upload is validated.
 
+PyPI cutover checklist:
+
+1. Create the PyPI pending publisher for the package above with the exact
+   owner, repository, workflow, and environment values in the table.
+2. Verify the GitHub repository environment is named `pypi`; the workflow
+   publisher identity depends on that environment string.
+3. Prepare a new release version after `v2.1.0`, such as `v2.1.1`.
+4. Do not move or reuse the existing `v2.1.0` tag for the first PyPI upload.
+   The release workflow is loaded from the tagged commit, and `v2.1.0`
+   predates the PyPI publishing job.
+5. Push the new `v*.*.*` tag and confirm the `Publish to PyPI` job succeeds.
+6. Verify the published package metadata:
+
+   ```bash
+   curl -fsS https://pypi.org/pypi/darwin-mgmt-nic-configurator/json
+   ```
+
+7. Only after that verification, add README and quickstart install commands for
+   PyPI.
+
 ## Not Yet Primary Artifacts
 
 | Surface | Current status |
