@@ -22,7 +22,7 @@ site-specific recovery policy remain outside this repository.
 
 | Surface | Status |
 |---------|--------|
-| Tests | Unit suite is green with coverage above the configured 40 percent gate |
+| Tests | Unit suite is green with coverage above the configured 50 percent gate |
 | CI | GitHub Actions now cover CI, docs, secret scans, and tag releases |
 | Docs | MkDocs includes quickstart, architecture, CLI, bastion, artifacts, and this plan |
 | Packaging | Wheel/source distribution and Nix package paths are present |
@@ -71,7 +71,7 @@ device names, policies, and secrets.
 | P0 | Nix validation | `nix flake check` passes with new docs and tests included |
 | P0 | Hardware dry-run | `darwin-nic status` and `configure --dry-run` are checked on a bastion Mac |
 | P1 | Close or split issue #4 | Shipped NECP diagnostics are documented; remaining hardware evidence is tracked |
-| P1 | Ratchet tests | Next target is 50 percent coverage after macOS/network-manager follow-ups |
+| P1 | Ratchet tests | 50 percent coverage gate is enforced; next target is guided-setup behavior |
 | P2 | PyPI trusted publishing | Trusted publisher is configured and release workflow publishes packages |
 | P2 | Binary installer decision | Either validate PyInstaller releases or document them as unsupported |
 | P3 | Sophos and ABR spikes | Issues #2 and #3 are scoped separately from v2.1.0 release readiness |

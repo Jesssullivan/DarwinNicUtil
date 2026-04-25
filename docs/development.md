@@ -52,8 +52,8 @@ uv build
 ## Test Policy
 
 Runtime changes should include focused tests near the touched surface. The
-current coverage gate starts at 40 percent and should ratchet upward as the
-large TUI and network-manager surfaces become better covered.
+current coverage gate is 50 percent and should ratchet upward as the large
+guided-setup surface becomes better covered.
 
 Useful focused runs:
 
