@@ -40,6 +40,24 @@ host network policy can make them confusing:
 - Replacing downstream operator runbooks.
 - Promising standalone binaries before CI, checksums, and signing policy exist.
 
+## Boundary Decisions
+
+DarwinNicUtil can report generic host-side conditions that affect a USB
+management NIC, but it should not become a compliance, endpoint-security, or
+approval-bypass tool.
+
+ABR-style approval keepalives and scripted approvers are out of scope for this
+repo. If a site needs that behavior, it belongs in local operator automation or
+a separate tool with its own security review. The generic contract here remains
+normal interactive sudo for CLI use, TUI-safe sudo after pre-authentication, and
+clear dry-run/status output before privileged changes.
+
+Sophos, ZTNA, CryptoGuard, and similar endpoint-security products are also out
+of scope as product-specific integrations. This repo may document generic
+symptoms such as host-local socket policy blocking ordinary TCP while link-layer
+tools still work. It should not ship adversarial compliance modules, product
+workarounds, private policy, or host-specific rules.
+
 ## Operator Contract
 
 The stable generic commands are:
