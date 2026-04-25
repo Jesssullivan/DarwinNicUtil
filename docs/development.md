@@ -3,238 +3,116 @@
 ## Setup
 
 ```bash
-# Clone repository
 git clone https://github.com/Jesssullivan/DarwinNicUtil.git
 cd DarwinNicUtil
 
-# Create virtual environment (Python 3.14+)
-python3 -m venv venv
-source venv/bin/activate
-
-# Install with dev dependencies
-pip install -e ".[dev]"
+uv sync --extra dev
 ```
+
+Python 3.14+ is required for source-based development. The Nix package provides
+its own interpreter.
 
 ## Project Structure
 
-```
+```text
 DarwinNicUtil/
-├── darwin-nic              # Main entry point
-├── darwin-nic-venv         # Venv wrapper
-├── src/darwin_mgmt_nic/    # Source code
-├── tests/                  # Test suite
-├── docs/                   # Documentation
-├── pyproject.toml          # Project config
+├── darwin-nic              # Legacy bootstrap runner
+├── src/darwin_mgmt_nic/    # Runtime package
+├── tests/                  # Unit and docs tests
+├── docs/                   # MkDocs site
+├── nix/                    # Nix package, overlay, and modules
+├── .github/workflows/      # GitHub CI, docs, release, and secret scans
+├── pyproject.toml          # Python package and tooling config
 └── mkdocs.yml              # Docs config
 ```
 
-## Commands
+## Common Commands
 
-```mermaid
-flowchart LR
-    subgraph Lint
-        BLACK[black src/ tests/]
-        RUFF[ruff check src/ tests/]
-        MYPY[mypy src/darwin_mgmt_nic]
-    end
+| Command | Purpose |
+|---------|---------|
+| `just dev` | Sync development dependencies |
+| `just run <args>` | Run `darwin-nic` from the checkout |
+| `just check` | Run format check, Ruff, and mypy |
+| `just test` | Run pytest with coverage |
+| `just docs-build` | Build MkDocs locally |
+| `just build-wheel` | Build wheel and source distribution |
+| `just nix-check` | Run `nix flake check` |
 
-    subgraph Test
-        PYTEST[./scripts/run_tests.sh]
-    end
-
-    subgraph Build
-        BINARY[./scripts/build.sh]
-        WHEEL[python -m build]
-    end
-```
-
-### Linting
+Direct equivalents:
 
 ```bash
-# Format code
-black src/ tests/
-
-# Lint code
-ruff check src/ tests/
-
-# Type check
-mypy src/darwin_mgmt_nic
+uv run black --check src/ tests/
+uv run ruff check src/ tests/
+uv run mypy src/darwin_mgmt_nic
+uv run pytest --cov=darwin_mgmt_nic --cov-report=term-missing
+uv run mkdocs build --strict
+uv build
 ```
 
-### Testing
+## Test Policy
+
+Runtime changes should include focused tests near the touched surface. The
+current coverage gate starts at 40 percent and should ratchet upward as the
+large TUI and network-manager surfaces become better covered.
+
+Useful focused runs:
 
 ```bash
-# Run all tests with coverage
-./scripts/run_tests.sh
-
-# Run specific test
-pytest tests/test_config.py::TestNetworkConfig::test_validation -v
-
-# Run with verbose output
-pytest tests/ -v --tb=short
+uv run --extra dev python -m pytest -q
+uv run --extra dev python -m pytest tests/test_settings.py -q
+uv run --extra dev python -m pytest tests/test_app.py -q
 ```
 
-### Building
-
-```bash
-# Build PyInstaller binary
-./scripts/build.sh
-
-# Build wheel
-python -m build
-```
+Tests mock system commands. Do not require live USB adapters, privileged network
+mutation, Tailscale, or downstream switch access in the unit suite.
 
 ## Code Style
 
 | Rule | Value |
 |------|-------|
 | Line length | 120 characters |
-| Python version | 3.14+ (PEP 750) |
+| Runtime target | Python 3.14+ |
 | Formatter | Black |
 | Linter | Ruff |
-| Type checker | mypy (strict) |
+| Type checker | mypy strict mode |
 
-### Type Hints
+Use typed functions for new runtime code. Keep comments short and reserve them
+for command parsing, privilege boundaries, or platform-specific behavior that is
+not obvious from the code.
 
-All functions require type hints:
+## CI
 
-```python
-def configure_interface(
-    interface: str,
-    ip_address: str,
-    netmask: str = "255.255.255.0"
-) -> bool:
-    """Configure network interface."""
-    ...
-```
+GitHub Actions now own the public validation path:
 
-### Dataclasses
+| Workflow | Purpose |
+|----------|---------|
+| `ci.yml` | Format, lint, type-check, tests, docs build, package build |
+| `secret-detection.yml` | Gitleaks and TruffleHog scanning |
+| `docs.yml` | MkDocs build and GitHub Pages artifact upload |
+| `release.yml` | Tag-triggered wheel/source distribution and GitHub Release |
 
-Use frozen dataclasses with slots:
-
-```python
-@dataclass(frozen=True, slots=True)
-class NetworkConfig:
-    device_ip: str
-    laptop_ip: str
-    netmask: str = "255.255.255.0"
-```
-
-## Testing
-
-### Test Categories
-
-```mermaid
-pie title Test Distribution
-    "Config Models" : 16
-    "Detectors" : 7
-    "Factory" : 14
-    "macOS" : 16
-    "Configurator" : 12
-```
-
-### Writing Tests
-
-```python
-import pytest
-from darwin_mgmt_nic.config import NetworkConfig
-
-class TestNetworkConfig:
-    def test_valid_config(self):
-        config = NetworkConfig(
-            device_ip="192.0.2.1",
-            laptop_ip="192.0.2.100",
-            netmask="255.255.255.0",
-            mgmt_network="198.51.100.0/24",
-            device_name="Test"
-        )
-        assert config.device_ip == "192.0.2.1"
-
-    def test_invalid_ip_raises(self):
-        with pytest.raises(ValueError):
-            NetworkConfig(
-                device_ip="invalid",
-                laptop_ip="192.0.2.100",
-                ...
-            )
-```
-
-### Fixtures
-
-Common fixtures are in `tests/conftest.py`:
-
-```python
-@pytest.fixture
-def mock_networksetup(mocker):
-    """Mock networksetup command output."""
-    return mocker.patch("subprocess.run", ...)
-```
-
-## CI/CD Pipeline
-
-```mermaid
-flowchart LR
-    subgraph Lint Stage
-        L1[black]
-        L2[ruff]
-        L3[mypy]
-    end
-
-    subgraph Test Stage
-        T1[pytest]
-        T2[SAST]
-        T3[Secret Detection]
-    end
-
-    subgraph Build Stage
-        B1[PyInstaller Binary]
-        B2[Python Wheel]
-    end
-
-    subgraph Pages Stage
-        P1[MkDocs Build]
-    end
-
-    L1 --> T1
-    L2 --> T1
-    L3 --> T1
-    T1 --> B1
-    T2 --> B1
-    T3 --> B1
-    B1 --> P1
-    B2 --> P1
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Make changes
-4. Add tests
-5. Run linting: `black . && ruff check .`
-6. Run tests: `./scripts/run_tests.sh`
-7. Commit: `git commit -m 'Add amazing feature'`
-8. Push: `git push origin feature/amazing-feature`
-9. Open a pull request
-
-### Commit Messages
-
-Use conventional commits:
-
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation
-- `refactor:` Code refactoring
-- `test:` Test changes
-- `chore:` Maintenance
+GitLab CI remains in the repository for compatibility, but GitHub is the
+release-facing surface.
 
 ## Releasing
 
+Before tagging:
+
 ```bash
-# Update version in pyproject.toml
-# Create tag
+just check
+uv run --extra dev python -m pytest -q
+uv run --extra dev mkdocs build --strict
+uv build
+nix flake check
+```
+
+Then tag from a clean, reviewed branch:
+
+```bash
 git tag -a v2.1.0 -m "Release v2.1.0"
 git push origin v2.1.0
-
-# CI will build and publish artifacts
 ```
+
+The release workflow attaches `dist/*` to the GitHub Release. PyPI trusted
+publishing and standalone binary distribution are follow-up release tasks unless
+they are explicitly enabled before the tag.

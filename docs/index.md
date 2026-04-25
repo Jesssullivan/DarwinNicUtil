@@ -1,56 +1,69 @@
 # Darwin Management NIC Configurator
 
-Configure USB network interfaces for out-of-band management access with automatic WiFi preservation.
+`darwin-nic` configures a USB Ethernet adapter for out-of-band management while
+preserving the host's normal Wi-Fi and tailnet path.
 
-## Features
+## What It Owns
 
-- **Single Binary** - No Python environment required
-- **WiFi Preservation** - Maintains internet connectivity during USB NIC setup
-- **Hardware-Aware** - MacBook model detection and optimal port recommendations
-- **Safety First** - Protected interfaces prevent accidental misconfiguration
+- USB NIC detection and ranking.
+- Static USB management addressing.
+- Wi-Fi/service-order preservation.
+- Dry-run and status output before privileged changes.
+- Bastion diagnostics for route state, `scutil --nwi`, Tailscale extension
+  state, and recent macOS NECP socket drops.
+
+Device-specific topology, credentials, switch commands, and recovery policy
+belong in downstream operator repositories.
 
 ## Quick Start
 
 ```bash
-# Interactive setup (recommended)
-./darwin-nic setup
-
-# CLI configuration
-./darwin-nic configure --device-ip 192.0.2.1 --laptop-ip 192.0.2.100 --preserve-wifi
+nix run github:Jesssullivan/DarwinNicUtil -- status
+nix run github:Jesssullivan/DarwinNicUtil -- configure \
+  --device-ip 192.168.88.1 \
+  --laptop-ip 192.168.88.100 \
+  --mgmt-network 192.168.88.0/24 \
+  --preserve-wifi
 ```
 
-## How It Works
+From a checkout:
+
+```bash
+uv sync --extra dev
+uv run darwin-nic setup
+uv run darwin-nic status
+```
+
+## Workflow
 
 ```mermaid
 flowchart LR
-    A[USB NIC Plugged In] --> B{Detect Interface}
-    B --> C[Score & Rank NICs]
-    C --> D[Configure Selected NIC]
-    D --> E[Preserve WiFi Priority]
-    E --> F[Test Connectivity]
+    A[USB NIC plugged in] --> B[Detect safe candidate]
+    B --> C[Apply profile or CLI IPs]
+    C --> D[Preserve Wi-Fi priority]
+    D --> E[Add management route]
+    E --> F[Report status and diagnostics]
 ```
 
-## Use Cases
+## Main Commands
 
 | Scenario | Command |
 |----------|---------|
-| First-time setup | `darwin-nic setup` |
-| Use saved profile | `darwin-nic configure --profile homelab` |
-| Quick configure | `darwin-nic configure --device-ip 192.0.2.1 --laptop-ip 192.0.2.100` |
-| View config | `darwin-nic config` |
-| Check status | `darwin-nic status` |
-| Monitor network | `darwin-nic dashboard` |
+| Guided setup | `darwin-nic setup` |
+| Profile-based setup | `darwin-nic configure --profile homelab --preserve-wifi` |
+| One-off setup | `darwin-nic configure --device-ip 192.168.88.1 --laptop-ip 192.168.88.100 --mgmt-network 192.168.88.0/24` |
+| Inspect state | `darwin-nic status` |
+| List profiles | `darwin-nic profiles` |
 
-## Requirements
+## Platform Status
 
-- macOS (Darwin) - Linux support planned
-- Python 3.14+
-- USB-to-Ethernet adapter
+| Platform | Status |
+|----------|--------|
+| macOS | Primary supported platform |
+| Linux | Experimental placeholder support |
 
-## Supported Adapters
+## Artifacts
 
-Realtek, ASIX, Belkin, Apple USB Ethernet, StarTech, Cable Matters, TP-Link, and generic USB LAN adapters.
-
-## License
-
-zlib License - Copyright (c) 2024-2025 Contributors
+The release path currently supports Python wheel/source distributions, Nix
+packages, and MkDocs site artifacts. Standalone binary and PyPI publication are
+tracked follow-ups rather than established release outputs.

@@ -3,11 +3,11 @@ Linux-specific USB NIC detection and configuration (placeholder)
 """
 
 import logging
-from typing import Sequence
+from collections.abc import Sequence
 from pathlib import Path
 
+from .config import InterfaceName, IPAddress, NetworkInterface
 from .detectors import USBNICDetector
-from .config import NetworkInterface, InterfaceName, IPAddress
 
 logger = logging.getLogger(__name__)
 
@@ -34,16 +34,11 @@ class LinuxUSBNICDetector(USBNICDetector):
         if carrier_file.exists():
             try:
                 return carrier_file.read_text().strip() == "1"
-            except:
+            except Exception:
                 return False
         return False
 
-    def configure_interface(
-        self,
-        interface: InterfaceName,
-        ip: IPAddress,
-        netmask: str
-    ) -> bool:
+    def configure_interface(self, interface: InterfaceName, ip: IPAddress, netmask: str) -> bool:
         """Configure using ip command"""
         logger.warning("Linux support not yet implemented")
         return False
@@ -53,20 +48,16 @@ class LinuxUSBNICDetector(USBNICDetector):
         logger.warning("Linux support not yet implemented")
         return False
 
-    def test_connectivity(
-        self,
-        target_ip: IPAddress,
-        count: int = 3,
-        timeout: int = 2
-    ) -> bool:
+    def test_connectivity(self, target_ip: IPAddress, count: int = 3, timeout: int = 2) -> bool:
         """Test connectivity using ping"""
         import subprocess
+
         try:
             result = subprocess.run(
                 ["ping", "-c", str(count), "-W", str(timeout), target_ip],
                 capture_output=True,
-                timeout=count * timeout + 5
+                timeout=count * timeout + 5,
             )
             return result.returncode == 0
-        except:
+        except Exception:
             return False

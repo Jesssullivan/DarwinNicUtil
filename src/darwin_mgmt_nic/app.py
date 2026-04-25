@@ -11,7 +11,7 @@ import logging
 import re
 import subprocess
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .settings import Settings, get_config_paths, init_config, load_settings
 
@@ -74,8 +74,7 @@ def cmd_configure(args: argparse.Namespace, settings: Settings) -> int | None:
     if args.show_dashboard:
         sys.argv.append("--show-dashboard")
 
-    cli_main()
-    return None
+    return cli_main()
 
 
 def cmd_setup(args: argparse.Namespace) -> None:
@@ -111,7 +110,7 @@ def cmd_status(args: argparse.Namespace) -> None:
     print_bastion_diagnostics(console)
 
 
-def print_bastion_diagnostics(console, detector=None) -> None:
+def print_bastion_diagnostics(console: Any, detector: Any = None) -> None:
     """Print high-signal bastion/OOB diagnostics when USB management state exists."""
     from rich.panel import Panel
     from rich.table import Table
@@ -161,9 +160,7 @@ def print_bastion_diagnostics(console, detector=None) -> None:
             "while the Tailscale Network Extension is active. Ordinary sockets may be blocked."
         )
     if diagnostics.recent_necp_drop:
-        console.print(
-            "[yellow]Warning:[/yellow] Recent macOS logs show `reason: NECP` drops for outbound sockets."
-        )
+        console.print("[yellow]Warning:[/yellow] Recent macOS logs show `reason: NECP` drops for outbound sockets.")
 
 
 def cmd_dashboard(args: argparse.Namespace) -> None:
@@ -196,9 +193,7 @@ def cmd_test(args: argparse.Namespace) -> None:
     interfaces = ["en0", "en1", "en11"]
     for interface in interfaces:
         try:
-            result = subprocess.run(
-                ["ifconfig", interface], capture_output=True, text=True
-            )
+            result = subprocess.run(["ifconfig", interface], capture_output=True, text=True)
             if result.returncode == 0:
                 table.add_row(f"Interface {interface}", "[OK] Active", "N/A")
             else:
@@ -209,14 +204,10 @@ def cmd_test(args: argparse.Namespace) -> None:
     test_ips = ["192.0.2.1", "192.168.1.1", "8.8.8.8"]
     for ip in test_ips:
         try:
-            result = subprocess.run(
-                ["ping", "-c", "1", "-W", "2", ip], capture_output=True, text=True
-            )
+            result = subprocess.run(["ping", "-c", "1", "-W", "2", ip], capture_output=True, text=True)
             if result.returncode == 0:
                 time_match = re.search(r"time=(\d+\.?\d*)", result.stdout)
-                response_time = (
-                    time_match.group(1) + " ms" if time_match else "Unknown"
-                )
+                response_time = time_match.group(1) + " ms" if time_match else "Unknown"
                 table.add_row(ip, "[OK] Reachable", response_time)
             else:
                 table.add_row(ip, "[--] Unreachable", "Timeout")
@@ -292,12 +283,8 @@ def cmd_show_config(settings: Settings) -> None:
         profiles_table.add_column("Device Name", style="dim")
 
         for name, profile in settings.profiles.items():
-            default_marker = (
-                " [yellow]*[/yellow]" if name == settings.default_profile else ""
-            )
-            profiles_table.add_row(
-                f"{name}{default_marker}", profile.device_ip, profile.device_name
-            )
+            default_marker = " [yellow]*[/yellow]" if name == settings.default_profile else ""
+            profiles_table.add_row(f"{name}{default_marker}", profile.device_ip, profile.device_name)
 
         console.print(profiles_table)
         console.print("[dim]* = default profile[/dim]")
@@ -322,17 +309,13 @@ def cmd_list_profiles(settings: Settings) -> None:
 
     if not settings.profiles:
         console.print("[yellow]No profiles configured.[/yellow]")
-        console.print(
-            "Run [cyan]darwin-nic init-config[/cyan] to create a config file."
-        )
+        console.print("Run [cyan]darwin-nic init-config[/cyan] to create a config file.")
         return
 
     console.print("[bold cyan]Available Profiles[/bold cyan]\n")
 
     for name, profile in settings.profiles.items():
-        default = (
-            " [yellow](default)[/yellow]" if name == settings.default_profile else ""
-        )
+        default = " [yellow](default)[/yellow]" if name == settings.default_profile else ""
         console.print(f"[bold]{name}[/bold]{default}")
         console.print(f"  Device: {profile.device_name}")
         console.print(f"  IP: {profile.device_ip} -> {profile.laptop_ip}")
@@ -370,9 +353,7 @@ Examples:
 
     # Configure command
     configure_parser = subparsers.add_parser("configure", help="Configure USB NIC")
-    configure_parser.add_argument(
-        "--profile", metavar="NAME", help="Use named profile from config file"
-    )
+    configure_parser.add_argument("--profile", metavar="NAME", help="Use named profile from config file")
     configure_parser.add_argument(
         "--device-ip",
         default="__PROFILE__",
@@ -383,38 +364,20 @@ Examples:
         default="__PROFILE__",
         help="Laptop USB NIC IP (required unless using --profile)",
     )
-    configure_parser.add_argument(
-        "--netmask", default="255.255.255.0", help="Network mask"
-    )
-    configure_parser.add_argument(
-        "--mgmt-network", default="198.51.100.0/24", help="Management network"
-    )
-    configure_parser.add_argument(
-        "--device-name", default="Network Device", help="Device name"
-    )
-    configure_parser.add_argument(
-        "--dry-run", action="store_true", help="Show what would be done"
-    )
-    configure_parser.add_argument(
-        "--preserve-wifi", action="store_true", help="Preserve WiFi connectivity"
-    )
-    configure_parser.add_argument(
-        "--show-dashboard", action="store_true", help="Show network dashboard"
-    )
+    configure_parser.add_argument("--netmask", default="255.255.255.0", help="Network mask")
+    configure_parser.add_argument("--mgmt-network", default="198.51.100.0/24", help="Management network")
+    configure_parser.add_argument("--device-name", default="Network Device", help="Device name")
+    configure_parser.add_argument("--dry-run", action="store_true", help="Show what would be done")
+    configure_parser.add_argument("--preserve-wifi", action="store_true", help="Preserve WiFi connectivity")
+    configure_parser.add_argument("--show-dashboard", action="store_true", help="Show network dashboard")
 
     # Other subcommands
     subparsers.add_parser("setup", help="Interactive guided setup")
     subparsers.add_parser("status", help="Show network status")
 
-    dashboard_parser = subparsers.add_parser(
-        "dashboard", help="Show monitoring dashboard"
-    )
-    dashboard_parser.add_argument(
-        "--interference", action="store_true", help="Monitor for interference"
-    )
-    dashboard_parser.add_argument(
-        "--duration", type=int, help="Monitoring duration in seconds"
-    )
+    dashboard_parser = subparsers.add_parser("dashboard", help="Show monitoring dashboard")
+    dashboard_parser.add_argument("--interference", action="store_true", help="Monitor for interference")
+    dashboard_parser.add_argument("--duration", type=int, help="Monitoring duration in seconds")
 
     subparsers.add_parser("test", help="Test connectivity")
     subparsers.add_parser("restore", help="Restore backup configuration")

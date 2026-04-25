@@ -3,6 +3,7 @@ Tests for base detector functionality
 """
 
 import pytest
+
 from darwin_mgmt_nic.detectors import USBNICDetector
 from darwin_mgmt_nic.macos import MacOSUSBNICDetector
 
@@ -51,6 +52,7 @@ class TestUSBNICDetectorBase:
     def test_multiple_platforms_share_protected_list(self):
         """Test protected interfaces are shared across platforms"""
         from darwin_mgmt_nic.linux import LinuxUSBNICDetector
+
         macos_detector = MacOSUSBNICDetector()
         linux_detector = LinuxUSBNICDetector()
 

@@ -7,29 +7,29 @@ Uses Rich's Layout and Live to create a proper terminal application.
 Uses alternate screen mode (like vim/emacs) - exits cleanly back to shell.
 """
 
-import os
-import sys
-import tty
-import termios
-import signal
-import shutil
 import itertools
-from typing import Optional, Iterator, Tuple
-from rich.console import Console, RenderableType, Group
+import shutil
+import signal
+import sys
+import termios
+import tty
+from collections.abc import Callable, Iterator
+from types import FrameType, TracebackType
+from typing import Any
+
+from rich import box
+from rich.console import Console, Group, RenderableType
 from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
 from rich.text import Text
-from rich.table import Table
-from rich import box
-
 
 # Minimum terminal size requirements
 MIN_WIDTH = 60
 MIN_HEIGHT = 20
 
 
-def get_terminal_size() -> Tuple[int, int]:
+def get_terminal_size() -> tuple[int, int]:
     """Get current terminal size (width, height)."""
     size = shutil.get_terminal_size(fallback=(80, 24))
     return size.columns, size.lines
@@ -48,10 +48,11 @@ def read_single_key() -> str:
         tty.setraw(fd)
         ch = sys.stdin.read(1)
         # Handle escape sequences (arrow keys, etc.)
-        if ch == '\x1b':
+        if ch == "\x1b":
             # Read additional chars for escape sequence
             try:
                 import select
+
                 # Check if more data is available (escape sequence)
                 if select.select([sys.stdin], [], [], 0.1)[0]:
                     ch2 = sys.stdin.read(1)
@@ -59,7 +60,7 @@ def read_single_key() -> str:
                         ch3 = sys.stdin.read(1)
                         return ch + ch2 + ch3
                     return ch + ch2
-            except:
+            except Exception:
                 pass
         return ch
     finally:
@@ -76,7 +77,7 @@ class ProgressIndicator:
 
     STEPS = ["Baseline", "USB", "Cable", "Config", "Verify", "Monitor", "Done"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.current = 0
 
     def set_step(self, step: int) -> None:
@@ -118,7 +119,7 @@ class SpinnerState:
 
     FRAMES = ["◐", "◓", "◑", "◒"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._cycle: Iterator[str] = itertools.cycle(self.FRAMES)
         self.active = False
         self.message = ""
@@ -224,12 +225,14 @@ class TUILayout:
                 "[dim]Interactive configuration for out-of-band network access[/dim]"
             )
 
-        self.layout["header"].update(Panel(
-            content,
-            box=box.DOUBLE,
-            border_style="cyan",
-            padding=(0, 1),
-        ))
+        self.layout["header"].update(
+            Panel(
+                content,
+                box=box.DOUBLE,
+                border_style="cyan",
+                padding=(0, 1),
+            )
+        )
 
     def _update_progress_region(self) -> None:
         """Update progress region"""
@@ -242,29 +245,35 @@ class TUILayout:
         else:
             content = Group(step_text, Text(""), self.progress.render())
 
-        self.layout["progress"].update(Panel(
-            content,
-            box=box.SIMPLE,
-            border_style="magenta",
-        ))
+        self.layout["progress"].update(
+            Panel(
+                content,
+                box=box.SIMPLE,
+                border_style="magenta",
+            )
+        )
 
     def _update_body_region(self) -> None:
         """Update body region"""
-        self.layout["body"].update(Panel(
-            self._body_content,
-            box=box.ROUNDED,
-            border_style="white",
-            padding=(0, 1),
-        ))
+        self.layout["body"].update(
+            Panel(
+                self._body_content,
+                box=box.ROUNDED,
+                border_style="white",
+                padding=(0, 1),
+            )
+        )
 
     def _update_status_region(self) -> None:
         """Update status region with prominent styling"""
-        self.layout["status"].update(Panel(
-            self.spinner.render(),
-            box=box.HEAVY,
-            border_style="yellow",
-            padding=(0, 1),
-        ))
+        self.layout["status"].update(
+            Panel(
+                self.spinner.render(),
+                box=box.HEAVY,
+                border_style="yellow",
+                padding=(0, 1),
+            )
+        )
 
     def update_step(self, step: int, title: str) -> None:
         """
@@ -312,12 +321,14 @@ class TUILayout:
             Text(""),
             Text(message, style="red"),
         )
-        self.layout["body"].update(Panel(
-            error_content,
-            box=box.HEAVY,
-            border_style="red",
-            padding=(1, 2),
-        ))
+        self.layout["body"].update(
+            Panel(
+                error_content,
+                box=box.HEAVY,
+                border_style="red",
+                padding=(1, 2),
+            )
+        )
 
     def show_success(self, title: str, message: str = "") -> None:
         """
@@ -331,12 +342,14 @@ class TUILayout:
         if message:
             content_parts.extend([Text(""), Text(message, style="green")])
 
-        self.layout["body"].update(Panel(
-            Group(*content_parts),
-            box=box.ROUNDED,
-            border_style="green",
-            padding=(1, 2),
-        ))
+        self.layout["body"].update(
+            Panel(
+                Group(*content_parts),
+                box=box.ROUNDED,
+                border_style="green",
+                padding=(1, 2),
+            )
+        )
 
     def get_layout(self) -> Layout:
         """Get the layout object for Live display"""
@@ -361,7 +374,7 @@ class TUIApp:
                 ...
     """
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Console | None = None):
         # Configure console for proper terminal detection
         # See: https://rich.readthedocs.io/en/stable/console.html
         if console is None:
@@ -376,11 +389,11 @@ class TUIApp:
             self.console = console
 
         self.tui = TUILayout(self.console)
-        self.live: Optional[Live] = None
+        self.live: Live | None = None
         self._input_buffer = ""
-        self._old_sigwinch = None
+        self._old_sigwinch: Any = None
 
-    def _handle_resize(self, signum, frame) -> None:
+    def _handle_resize(self, signum: int, frame: FrameType | None) -> None:
         """Handle terminal resize signal (SIGWINCH)."""
         # Update console size
         width, height = get_terminal_size()
@@ -390,7 +403,7 @@ class TUIApp:
         # Refresh display
         self._refresh()
 
-    def check_terminal_size(self) -> Tuple[bool, str]:
+    def check_terminal_size(self) -> tuple[bool, str]:
         """
         Check if terminal meets minimum size requirements.
 
@@ -402,7 +415,7 @@ class TUIApp:
             return False, f"Terminal too small ({width}x{height}). Need at least {MIN_WIDTH}x{MIN_HEIGHT}."
         return True, ""
 
-    def __enter__(self) -> 'TUIApp':
+    def __enter__(self) -> TUIApp:
         """Enter TUI context - start Live display in alternate screen"""
         # Check terminal size
         ok, msg = self.check_terminal_size()
@@ -432,7 +445,12 @@ class TUIApp:
         self.live.refresh()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit TUI context - return to normal screen"""
         # Restore original signal handler
         if self._old_sigwinch is not None:
@@ -503,20 +521,20 @@ class TUIApp:
                 key = read_single_key()
 
                 # Handle Ctrl+C
-                if key == '\x03':
+                if key == "\x03":
                     raise KeyboardInterrupt()
 
                 # Handle response
-                if key.lower() == 'y':
+                if key.lower() == "y":
                     self.tui.update_status("Yes", spinner=False)
                     return True
-                elif key.lower() == 'n':
+                elif key.lower() == "n":
                     self.tui.update_status("No", spinner=False)
                     return False
-                elif key in ('\r', '\n'):  # Enter = default
+                elif key in ("\r", "\n"):  # Enter = default
                     self.tui.update_status("Yes" if default else "No", spinner=False)
                     return default
-                elif key == 'q':  # q to quit
+                elif key == "q":  # q to quit
                     raise KeyboardInterrupt()
                 # Ignore other keys, keep waiting
             except KeyboardInterrupt:
@@ -543,29 +561,29 @@ class TUIApp:
                 key = read_single_key()
 
                 # Handle Ctrl+C
-                if key == '\x03':
+                if key == "\x03":
                     raise KeyboardInterrupt()
 
                 # Handle Enter (submit)
-                if key in ('\r', '\n'):
+                if key in ("\r", "\n"):
                     result = self._input_buffer
                     self._input_buffer = ""
                     self.tui.update_status(f"Entered: {result}", spinner=False)
                     return result
 
                 # Handle backspace
-                elif key in ('\x7f', '\x08'):  # DEL or BS
+                elif key in ("\x7f", "\x08"):  # DEL or BS
                     if self._input_buffer:
                         self._input_buffer = self._input_buffer[:-1]
                         self._update_prompt_display(message)
 
                 # Handle Ctrl+U (clear line)
-                elif key == '\x15':
+                elif key == "\x15":
                     self._input_buffer = ""
                     self._update_prompt_display(message)
 
                 # Handle Escape (cancel, use default)
-                elif key.startswith('\x1b'):
+                elif key.startswith("\x1b"):
                     self._input_buffer = default
                     self.tui.update_status(f"Using default: {default}", spinner=False)
                     return default
@@ -600,12 +618,12 @@ class TUIApp:
         key = read_single_key()
 
         # Handle Ctrl+C
-        if key == '\x03':
+        if key == "\x03":
             raise KeyboardInterrupt()
 
         return key
 
-    def run_with_spinner(self, message: str, func, *args, **kwargs):
+    def run_with_spinner(self, message: str, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """
         Run a function while showing a spinner.
 
@@ -625,7 +643,7 @@ class TUIApp:
         return result
 
 
-def build_content(*items) -> Group:
+def build_content(*items: Any) -> Group:
     """
     Build a Group of content items for the body region.
 
@@ -641,7 +659,7 @@ def build_content(*items) -> Group:
         )
         app.update_body(content)
     """
-    renderables = []
+    renderables: list[RenderableType] = []
     for item in items:
         if isinstance(item, str):
             renderables.append(Text(item))

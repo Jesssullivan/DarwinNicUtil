@@ -1,0 +1,27 @@
+# DarwinNicUtil
+
+DarwinNicUtil is a Python CLI for configuring USB network interfaces for
+out-of-band management access while preserving Wi-Fi and tailnet connectivity.
+
+Primary docs:
+
+- `README.md`: install, usage, safety features, and development commands.
+- `docs/quickstart.md`: current Nix, source, and uv tool startup flows.
+- `docs/cli.md`: command and option reference.
+- `docs/bastion.md`: generic bastion/OOB operator flow and boundaries.
+- `docs/artifacts.md`: current release artifact policy.
+- `docs/architecture.md`: module structure and safety architecture.
+- `docs/superpowers/release-sprint-plan.md`: release-readiness sprint plan.
+
+Important boundaries:
+
+- This repo owns generic USB NIC setup, routing behavior, sudo behavior, and
+  host-side diagnostics.
+- Device-specific topology, credentials, MAC addresses, and switch policy belong
+  in consuming operator runbooks.
+- The generic bastion commands are:
+
+```bash
+darwin-nic status
+darwin-nic configure --profile homelab --preserve-wifi
+```

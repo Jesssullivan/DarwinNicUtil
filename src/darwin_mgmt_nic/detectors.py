@@ -3,10 +3,10 @@ Abstract base classes and protocols for USB NIC detection
 """
 
 from abc import ABC, abstractmethod
-from typing import Protocol, Sequence
-from collections.abc import Sequence as ABCSequence
+from collections.abc import Sequence
+from typing import Protocol
 
-from .config import NetworkInterface, InterfaceName, IPAddress
+from .config import InterfaceName, IPAddress, NetworkInterface
 
 
 class NetworkDetector(Protocol):
@@ -34,22 +34,26 @@ class USBNICDetector(ABC):
 
     # Protected interfaces that must NEVER be modified
     # This is a class attribute shared across all instances
-    PROTECTED_INTERFACES: frozenset[InterfaceName] = frozenset({
-        # macOS
-        "en0",    # Primary WiFi
-        "en1",    # Primary Ethernet
-        "lo0",    # Loopback
-        "awdl0",  # Apple Wireless Direct Link
-        "llw0",   # Low Latency WLAN
-        "utun0", "utun1", "utun2",  # VPN tunnels
-        # Linux
-        "eth0",   # Primary Ethernet
-        "wlan0",  # Primary WiFi
-        "lo",     # Loopback
-        # Windows
-        "Ethernet",
-        "Wi-Fi",
-    })
+    PROTECTED_INTERFACES: frozenset[InterfaceName] = frozenset(
+        {
+            # macOS
+            "en0",  # Primary WiFi
+            "en1",  # Primary Ethernet
+            "lo0",  # Loopback
+            "awdl0",  # Apple Wireless Direct Link
+            "llw0",  # Low Latency WLAN
+            "utun0",
+            "utun1",
+            "utun2",  # VPN tunnels
+            # Linux
+            "eth0",  # Primary Ethernet
+            "wlan0",  # Primary WiFi
+            "lo",  # Loopback
+            # Windows
+            "Ethernet",
+            "Wi-Fi",
+        }
+    )
 
     @abstractmethod
     def detect_interfaces(self) -> Sequence[NetworkInterface]:
@@ -76,12 +80,7 @@ class USBNICDetector(ABC):
         ...
 
     @abstractmethod
-    def configure_interface(
-        self,
-        interface: InterfaceName,
-        ip: IPAddress,
-        netmask: str
-    ) -> bool:
+    def configure_interface(self, interface: InterfaceName, ip: IPAddress, netmask: str) -> bool:
         """
         Configure IP address on interface.
 
@@ -114,12 +113,7 @@ class USBNICDetector(ABC):
         ...
 
     @abstractmethod
-    def test_connectivity(
-        self,
-        target_ip: IPAddress,
-        count: int = 3,
-        timeout: int = 2
-    ) -> bool:
+    def test_connectivity(self, target_ip: IPAddress, count: int = 3, timeout: int = 2) -> bool:
         """
         Test ICMP connectivity to target.
 

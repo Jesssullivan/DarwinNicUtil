@@ -46,6 +46,9 @@ dev = [
     "black>=24.0.0",
     "ruff>=0.5.0",
     "mypy>=1.11.0",
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocs-mermaid2-plugin>=1.1.0",
 ]
 
 [project.scripts]
@@ -65,7 +68,9 @@ packages = ["src/darwin_mgmt_nic"]
 
 [tool.black]
 line-length = 120
-target-version = ['py314']
+# Black does not yet expose a py314 target; keep formatter parsing on the
+# newest supported target while the package itself requires Python 3.14.
+target-version = ['py313']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -84,6 +89,8 @@ extend-exclude = '''
 [tool.ruff]
 line-length = 120
 target-version = "py314"
+
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -118,6 +125,7 @@ omit = [
 ]
 
 [tool.coverage.report]
+fail_under = 40
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",

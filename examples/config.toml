@@ -6,9 +6,11 @@
 # CONFIG SEARCH ORDER (later overrides earlier):
 #   1. /etc/darwin-nic/config.toml       (system-wide)
 #   2. ~/.config/darwin-nic/config.toml  (user global)
-#   3. ./.darwin-nic.toml                (local directory)
-#   4. DARWIN_NIC_* environment vars
-#   5. CLI arguments
+#   3. ~/.darwin-nic.toml                (legacy user config)
+#   4. ./.darwin-nic.toml                (local directory)
+#   5. ./darwin-nic.toml                 (alternate local directory)
+#   6. DARWIN_NIC_* environment vars
+#   7. CLI arguments at runtime
 
 # Default profile to use when none specified
 default_profile = "homelab"
@@ -30,22 +32,22 @@ show_dashboard = false
 # ─────────────────────────────────────────────────────────────────────────────
 
 [profiles.homelab]
-# Primary home lab bastion switch
+# Primary lab management device
 device_ip = "192.168.88.1"
 laptop_ip = "192.168.88.100"
-mgmt_network = "192.168.10.0/24"
-device_name = "CRS309 Bastion"
-description = "Primary home lab management - MikroTik CRS309"
-device_type = "mikrotik"
+mgmt_network = "192.168.88.0/24"
+device_name = "Lab Management Device"
+description = "Primary lab management network"
+device_type = "network"
 
 [profiles.homelab-secondary]
-# Secondary switch reachable via bastion
+# Secondary device on the same management network
 device_ip = "192.168.88.2"
 laptop_ip = "192.168.88.100"
-mgmt_network = "192.168.10.0/24"
-device_name = "CRS310 Secondary"
-description = "Secondary switch - BiDi backhaul"
-device_type = "mikrotik"
+mgmt_network = "192.168.88.0/24"
+device_name = "Secondary Lab Device"
+description = "Secondary management target"
+device_type = "network"
 
 [profiles.datacenter]
 # Datacenter OOB management

@@ -3,7 +3,8 @@ Tests for configuration models
 """
 
 import pytest
-from darwin_mgmt_nic.config import NetworkConfig, NetworkInterface, OSType
+
+from darwin_mgmt_nic.config import NetworkConfig, OSType
 
 
 class TestNetworkConfig:
@@ -24,7 +25,7 @@ class TestNetworkConfig:
                 laptop_ip="192.0.2.100",
                 netmask="255.255.255.0",
                 mgmt_network="198.51.100.0/24",
-                device_name="Test"
+                device_name="Test",
             )
 
     def test_invalid_laptop_ip(self):
@@ -35,7 +36,7 @@ class TestNetworkConfig:
                 laptop_ip="not.an.ip.address",
                 netmask="255.255.255.0",
                 mgmt_network="198.51.100.0/24",
-                device_name="Test"
+                device_name="Test",
             )
 
     def test_invalid_mgmt_network(self):
@@ -46,7 +47,7 @@ class TestNetworkConfig:
                 laptop_ip="192.0.2.100",
                 netmask="255.255.255.0",
                 mgmt_network="not.a.network/24",
-                device_name="Test"
+                device_name="Test",
             )
 
     def test_get_mgmt_gateway(self, sample_network_config):

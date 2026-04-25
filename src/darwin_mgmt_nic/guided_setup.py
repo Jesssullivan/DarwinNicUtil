@@ -12,36 +12,41 @@ This module provides an interactive, step-by-step setup wizard that:
 Uses a terminal-filling TUI that updates in place (no scrolling).
 """
 
+import json
+import logging
 import sys
 import time
-import logging
-import json
-from pathlib import Path
-from typing import Set, Optional
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import IntEnum
+from pathlib import Path
 
-from rich.console import Console, Group
+from rich import box
+from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Prompt, Confirm
+from rich.prompt import Confirm, Prompt
 from rich.table import Table
 from rich.text import Text
-from rich import box
 
-from .config import NetworkConfig
+from .config import NetworkConfig, NetworkInterface
 from .configurator import USBNICConfigurator
 from .factory import USBNICDetectorFactory
-from .detectors import NetworkInterface
 from .network_manager import (
-    ServiceOrderManager, WiFiMonitor, InterfaceScorer, RouteManager,
-    InterferenceAssessor, NetworkDashboard
+    InterfaceScorer,
+    InterferenceAssessor,
+    NetworkDashboard,
+    RouteManager,
+    ServiceOrderManager,
+    WiFiMonitor,
+    WiFiStatus,
 )
+from .settings import load_settings
 from .tui import TUIApp, build_content
-from .settings import load_settings, Settings
 
 
 class SetupStep(IntEnum):
     """Setup workflow steps"""
+
     INITIAL = 0
     BASELINE_COMPLETE = 1
     USB_DETECTED = 2
@@ -66,7 +71,7 @@ class SetupStep(IntEnum):
         }
         return names.get(self, str(self.name))
 
-    def can_transition_to(self, target: 'SetupStep') -> bool:
+    def can_transition_to(self, target: SetupStep) -> bool:
         """Check if transition to target step is valid"""
         # Can always go back to INITIAL (reset)
         if target == SetupStep.INITIAL:
@@ -83,10 +88,11 @@ class SetupStep(IntEnum):
 @dataclass
 class SetupState:
     """Track setup progress state"""
+
     current_step: int = 0
-    baseline_interfaces: Set[str] = field(default_factory=set)
-    detected_usb_nic: Optional[str] = None
-    config: Optional[NetworkConfig] = None
+    baseline_interfaces: set[str] = field(default_factory=set)
+    detected_usb_nic: str | None = None
+    config: NetworkConfig | None = None
     configured: bool = False
     verified: bool = False
     timestamp: float = 0.0
@@ -97,13 +103,17 @@ class SetupState:
             "current_step": self.current_step,
             "baseline_interfaces": list(self.baseline_interfaces),
             "detected_usb_nic": self.detected_usb_nic,
-            "config": None if self.config is None else {
-                "device_ip": self.config.device_ip,
-                "laptop_ip": self.config.laptop_ip,
-                "netmask": self.config.netmask,
-                "mgmt_network": self.config.mgmt_network,
-                "device_name": self.config.device_name,
-            },
+            "config": (
+                None
+                if self.config is None
+                else {
+                    "device_ip": self.config.device_ip,
+                    "laptop_ip": self.config.laptop_ip,
+                    "netmask": self.config.netmask,
+                    "mgmt_network": self.config.mgmt_network,
+                    "device_name": self.config.device_name,
+                }
+            ),
             "configured": self.configured,
             "verified": self.verified,
             "timestamp": self.timestamp,
@@ -111,7 +121,7 @@ class SetupState:
         return json.dumps(state_dict, indent=2)
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'SetupState':
+    def from_json(cls, json_str: str) -> SetupState:
         """Deserialize state from JSON string"""
         data = json.loads(json_str)
 
@@ -143,13 +153,13 @@ class GuidedSetup:
     # State file location in /tmp (auto-cleaned on reboot)
     STATE_FILE = Path("/tmp/darwin-nic-setup-state.json")
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Console | None = None):
         self.console = console or Console()
         self.logger = logging.getLogger(__name__)
         self.state = SetupState()
 
         # TUI app (set during run())
-        self.tui: Optional[TUIApp] = None
+        self.tui: TUIApp | None = None
 
         # Load settings from config files
         self.settings = load_settings()
@@ -180,7 +190,7 @@ class GuidedSetup:
             self.logger.error(f"Failed to save state: {e}")
             return False
 
-    def load_state(self) -> Optional[SetupState]:
+    def load_state(self) -> SetupState | None:
         """
         Load state from disk if it exists.
 
@@ -224,8 +234,9 @@ class GuidedSetup:
         Returns:
             True if resuming from previous state, False for fresh start
         """
-        from rich.prompt import Confirm
         from datetime import datetime
+
+        from rich.prompt import Confirm
 
         previous_state = self.load_state()
         if previous_state is None:
@@ -289,8 +300,10 @@ class GuidedSetup:
             content = build_content(
                 Text("Rollback Instructions", style="bold yellow"),
                 Text(""),
-                *[Text(line, style="cyan" if line.startswith("  sudo") or line.startswith("  ./") else "white")
-                  for line in lines],
+                *[
+                    Text(line, style="cyan" if line.startswith("  sudo") or line.startswith("  ./") else "white")
+                    for line in lines
+                ],
             )
             self.tui.update_body(content)
             self.tui.update_status("Configuration failed - see rollback instructions")
@@ -340,9 +353,7 @@ class GuidedSetup:
         if self.state.detected_usb_nic and self.state.config:
             try:
                 subprocess.run(
-                    ["sudo", "-n", "ifconfig", self.state.detected_usb_nic, "down"],
-                    capture_output=True,
-                    timeout=10
+                    ["sudo", "-n", "ifconfig", self.state.detected_usb_nic, "down"], capture_output=True, timeout=10
                 )
                 results.append(("[OK]", f"Interface {self.state.detected_usb_nic} disabled"))
             except Exception as e:
@@ -355,7 +366,7 @@ class GuidedSetup:
                 subprocess.run(
                     ["sudo", "-n", "route", "delete", "-net", self.state.config.mgmt_network],
                     capture_output=True,
-                    timeout=10
+                    timeout=10,
                 )
                 results.append(("[OK]", "Management route removed"))
             except Exception as e:
@@ -395,11 +406,7 @@ class GuidedSetup:
         return success
 
     def run_step_with_retry(
-        self,
-        step_func,
-        step_name: str,
-        max_retries: int = 2,
-        allow_skip: bool = False
+        self, step_func: Callable[[], bool], step_name: str, max_retries: int = 2, allow_skip: bool = False
     ) -> bool:
         """
         Run a setup step with retry capability.
@@ -443,10 +450,7 @@ class GuidedSetup:
                         return False
                 else:
                     if self.tui:
-                        self.tui.show_error(
-                            f"{step_name} failed",
-                            f"Failed after {max_retries + 1} attempts"
-                        )
+                        self.tui.show_error(f"{step_name} failed", f"Failed after {max_retries + 1} attempts")
                     else:
                         self.print_error(f"{step_name} failed after {max_retries + 1} attempts")
                     return False
@@ -479,12 +483,7 @@ class GuidedSetup:
 
         # Check if already authenticated
         try:
-            result = subprocess.run(
-                ["sudo", "-n", "true"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
+            result = subprocess.run(["sudo", "-n", "true"], capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
                 return (True, True, "")
         except subprocess.TimeoutExpired:
@@ -492,12 +491,7 @@ class GuidedSetup:
 
         # Check if user can sudo at all
         try:
-            result = subprocess.run(
-                ["sudo", "-n", "-l"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
+            result = subprocess.run(["sudo", "-n", "-l"], capture_output=True, text=True, timeout=5)
             stderr = result.stderr.lower() if result.stderr else ""
 
             if "may not run sudo" in stderr:
@@ -511,18 +505,16 @@ class GuidedSetup:
     def _detect_abr(self) -> bool:
         """Check if Admin By Request is installed"""
         import shutil
+
         abr_app = Path("/Applications/Admin By Request.app")
         return shutil.which("adminbyrequest") is not None or abr_app.exists()
 
     def _try_open_abr(self) -> bool:
         """Attempt to open Admin By Request app"""
         import subprocess
+
         try:
-            subprocess.run(
-                ["open", "-a", "Admin By Request"],
-                capture_output=True,
-                timeout=5
-            )
+            subprocess.run(["open", "-a", "Admin By Request"], capture_output=True, timeout=5)
             return True
         except Exception:
             return False
@@ -541,6 +533,7 @@ class GuidedSetup:
             True if sudo authentication successful, False otherwise
         """
         import subprocess
+
         from rich.prompt import Confirm
 
         self.console.print()
@@ -561,11 +554,7 @@ class GuidedSetup:
                 self.console.print()
 
                 try:
-                    result = subprocess.run(
-                        ["sudo", "-v"],
-                        capture_output=False,
-                        timeout=60
-                    )
+                    result = subprocess.run(["sudo", "-v"], capture_output=False, timeout=60)
 
                     if result.returncode == 0:
                         self.print_success("Sudo authentication successful")
@@ -720,7 +709,7 @@ class GuidedSetup:
         """Print an info message"""
         self.console.print(f"[cyan]ℹ[/cyan]  {message}")
 
-    def get_current_interfaces(self) -> Set[str]:
+    def get_current_interfaces(self) -> set[str]:
         """Get current set of network interfaces"""
         try:
             detector = USBNICDetectorFactory.create(tui_mode=True)
@@ -730,7 +719,7 @@ class GuidedSetup:
             self.logger.error(f"Failed to detect interfaces: {e}")
             return set()
 
-    def get_interface_details(self, interface_name: str) -> Optional[NetworkInterface]:
+    def get_interface_details(self, interface_name: str) -> NetworkInterface | None:
         """Get details for a specific interface"""
         try:
             detector = USBNICDetectorFactory.create(tui_mode=True)
@@ -752,8 +741,8 @@ class GuidedSetup:
             content = build_content(
                 Text("Before we begin:", style="bold yellow"),
                 Text(""),
-                Text("  • Ensure your management USB-to-Ethernet adapter is ", style="white") +
-                    Text("DISCONNECTED", style="bold red"),
+                Text("  • Ensure your management USB-to-Ethernet adapter is ", style="white")
+                + Text("DISCONNECTED", style="bold red"),
                 Text("  • Do NOT connect any cables yet", style="white"),
                 Text("  • We need to establish a baseline of existing interfaces", style="white"),
             )
@@ -777,8 +766,10 @@ class GuidedSetup:
                 table.add_row(iface)
 
             content = build_content(
-                Text(f"✓ Baseline established: {len(self.state.baseline_interfaces)} interfaces detected",
-                     style="bold green"),
+                Text(
+                    f"✓ Baseline established: {len(self.state.baseline_interfaces)} interfaces detected",
+                    style="bold green",
+                ),
                 Text(""),
                 table,
             )
@@ -788,7 +779,9 @@ class GuidedSetup:
             self.print_step(1, 7, "Establish Baseline", "Ensure NO management USB NIC is connected")
             self.console.print()
             self.print_warning("Before we begin:")
-            self.console.print("  • Ensure your management USB-to-Ethernet adapter is [bold red]DISCONNECTED[/bold red]")
+            self.console.print(
+                "  • Ensure your management USB-to-Ethernet adapter is [bold red]DISCONNECTED[/bold red]"
+            )
 
             if not Confirm.ask("Is your management USB NIC DISCONNECTED?", default=False):
                 self.print_error("Please disconnect the USB NIC and try again")
@@ -809,10 +802,8 @@ class GuidedSetup:
             content = build_content(
                 Text("Now we'll detect your management USB NIC:", style="bold cyan"),
                 Text(""),
-                Text("  1. ") + Text("Connect", style="bold cyan") +
-                    Text(" your USB-to-Ethernet adapter to your Mac"),
-                Text("  2. ") + Text("Do NOT", style="bold yellow") +
-                    Text(" plug in the ethernet cable yet"),
+                Text("  1. ") + Text("Connect", style="bold cyan") + Text(" your USB-to-Ethernet adapter to your Mac"),
+                Text("  2. ") + Text("Do NOT", style="bold yellow") + Text(" plug in the ethernet cable yet"),
                 Text("  3. Wait for the adapter to be recognized (LED may light up)"),
             )
             self.tui.update_body(content)
@@ -846,14 +837,16 @@ class GuidedSetup:
             else:
                 self.tui.update_status("Detection failed")
                 self.tui.show_error(
-                    "Timeout: No new USB interface detected",
-                    "Try unplugging and replugging the USB adapter"
+                    "Timeout: No new USB interface detected", "Try unplugging and replugging the USB adapter"
                 )
                 return False
 
             self.tui.update_status("USB NIC detected!")
 
             # Show interface details
+            if self.state.detected_usb_nic is None:
+                self.tui.show_error("Setup Error", "No USB NIC has been detected")
+                return False
             iface_details = self.get_interface_details(self.state.detected_usb_nic)
             details_table = Table(title=f"Interface Details: {self.state.detected_usb_nic}", box=box.ROUNDED)
             details_table.add_column("Property", style="cyan")
@@ -867,8 +860,7 @@ class GuidedSetup:
                 details_table.add_row("Name", self.state.detected_usb_nic)
 
             content = build_content(
-                Text(f"✓ USB NIC detected: ", style="bold green") +
-                    Text(self.state.detected_usb_nic, style="bold cyan"),
+                Text("✓ USB NIC detected: ", style="bold green") + Text(self.state.detected_usb_nic, style="bold cyan"),
                 Text(""),
                 details_table,
             )
@@ -884,7 +876,7 @@ class GuidedSetup:
                 self.print_error("Setup cancelled")
                 return False
 
-            for attempt in range(30):
+            for _attempt in range(30):
                 time.sleep(1)
                 current_interfaces = self.get_current_interfaces()
                 new_interfaces = current_interfaces - self.state.baseline_interfaces
@@ -908,11 +900,14 @@ class GuidedSetup:
             content = build_content(
                 Text("Now connect the ethernet cable:", style="bold cyan"),
                 Text(""),
-                Text("  1. Locate the ") + Text("management port", style="bold cyan") +
-                    Text(" on your ") + Text("target network device", style="bold"),
+                Text("  1. Locate the ")
+                + Text("management port", style="bold cyan")
+                + Text(" on your ")
+                + Text("target network device", style="bold"),
                 Text("     (Typically an RJ45 ethernet port)", style="dim"),
-                Text("  2. ") + Text("Connect", style="bold cyan") +
-                    Text(" an ethernet cable from your USB adapter to the device"),
+                Text("  2. ")
+                + Text("Connect", style="bold cyan")
+                + Text(" an ethernet cable from your USB adapter to the device"),
                 Text("  3. Wait for link lights on both ends"),
                 Text(""),
                 Text("Important:", style="bold yellow"),
@@ -931,6 +926,9 @@ class GuidedSetup:
             self.tui.update_status("Verifying physical link...", spinner=True)
             time.sleep(2)  # Give link time to establish
 
+            if self.state.detected_usb_nic is None:
+                self.print_error("No USB NIC has been detected")
+                return False
             iface_details = self.get_interface_details(self.state.detected_usb_nic)
             if iface_details and iface_details.is_active:
                 self.tui.update_status("Link established!")
@@ -963,6 +961,9 @@ class GuidedSetup:
                 return False
 
             time.sleep(2)
+            if self.state.detected_usb_nic is None:
+                self.print_error("No USB NIC has been detected")
+                return False
             iface_details = self.get_interface_details(self.state.detected_usb_nic)
             if iface_details and iface_details.is_active:
                 self.print_success("Physical link established")
@@ -1004,7 +1005,7 @@ class GuidedSetup:
                 laptop_ip=laptop_ip,
                 netmask=netmask,
                 mgmt_network=mgmt_network,
-                device_name=self.settings.device_name
+                device_name=self.settings.device_name,
             )
 
             # Show configuration summary
@@ -1040,7 +1041,7 @@ class GuidedSetup:
                     preserve_wifi=True,
                     management_location=False,
                     show_dashboard=False,
-                    forced_interface=self.state.detected_usb_nic
+                    forced_interface=self.state.detected_usb_nic,
                 )
                 success = configurator.configure()
 
@@ -1077,8 +1078,11 @@ class GuidedSetup:
             mgmt_network = Prompt.ask("  Management network", default=self.settings.mgmt_network, console=self.console)
 
             self.state.config = NetworkConfig(
-                device_ip=device_ip, laptop_ip=laptop_ip, netmask=netmask,
-                mgmt_network=mgmt_network, device_name=self.settings.device_name
+                device_ip=device_ip,
+                laptop_ip=laptop_ip,
+                netmask=netmask,
+                mgmt_network=mgmt_network,
+                device_name=self.settings.device_name,
             )
 
             if not Confirm.ask("Apply this configuration?", default=True):
@@ -1087,9 +1091,13 @@ class GuidedSetup:
 
             try:
                 configurator = USBNICConfigurator(
-                    self.state.config, dry_run=False, skip_confirmation=True,
-                    preserve_wifi=True, management_location=False, show_dashboard=False,
-                    forced_interface=self.state.detected_usb_nic
+                    self.state.config,
+                    dry_run=False,
+                    skip_confirmation=True,
+                    preserve_wifi=True,
+                    management_location=False,
+                    show_dashboard=False,
+                    forced_interface=self.state.detected_usb_nic,
                 )
                 if configurator.configure():
                     self.print_success("Network configuration applied successfully")
@@ -1124,9 +1132,7 @@ class GuidedSetup:
 
             try:
                 result = subprocess.run(
-                    ["ping", "-c", "3", "-t", "2", self.state.config.device_ip],
-                    capture_output=True,
-                    timeout=10
+                    ["ping", "-c", "3", "-t", "2", self.state.config.device_ip], capture_output=True, timeout=10
                 )
 
                 if result.returncode == 0:
@@ -1147,7 +1153,9 @@ class GuidedSetup:
                         Text("Troubleshooting:", style="bold yellow"),
                         Text("  • Verify target device is powered on", style="white"),
                         Text("  • Check cable connections", style="white"),
-                        Text(f"  • Verify target device is configured with {self.state.config.device_ip}", style="white"),
+                        Text(
+                            f"  • Verify target device is configured with {self.state.config.device_ip}", style="white"
+                        ),
                         Text("  • Try accessing via vendor management tool to check configuration", style="white"),
                     )
                     self.tui.update_body(content)
@@ -1169,8 +1177,7 @@ class GuidedSetup:
 
             try:
                 result = subprocess.run(
-                    ["ping", "-c", "3", "-t", "2", self.state.config.device_ip],
-                    capture_output=True, timeout=10
+                    ["ping", "-c", "3", "-t", "2", self.state.config.device_ip], capture_output=True, timeout=10
                 )
 
                 if result.returncode == 0:
@@ -1193,7 +1200,7 @@ class GuidedSetup:
 
             try:
                 # Gather network status info
-                wifi_status = self.wifi_monitor.get_status()
+                wifi_status = self.wifi_monitor.get_wifi_status()
                 interference = self.wifi_monitor.detect_interference()
                 service_order_ok = self.service_order_manager.validate_service_order()
 
@@ -1204,34 +1211,33 @@ class GuidedSetup:
                 ]
 
                 # WiFi status
-                if wifi_status.get("connected"):
-                    items.append(Text(f"  WiFi: ", style="white") +
-                                Text("Connected", style="bold green") +
-                                Text(f" ({wifi_status.get('ssid', 'Unknown')})", style="dim"))
+                if wifi_status and wifi_status.status == WiFiStatus.CONNECTED:
+                    items.append(
+                        Text("  WiFi: ", style="white")
+                        + Text("Connected", style="bold green")
+                        + Text(f" ({wifi_status.ssid or 'Unknown'})", style="dim")
+                    )
                 else:
-                    items.append(Text("  WiFi: ", style="white") +
-                                Text("Disconnected", style="bold yellow"))
+                    items.append(Text("  WiFi: ", style="white") + Text("Disconnected", style="bold yellow"))
 
                 # Interference check
                 if interference:
-                    items.append(Text("  Interference: ", style="white") +
-                                Text("Detected", style="bold yellow"))
+                    items.append(Text("  Interference: ", style="white") + Text("Detected", style="bold yellow"))
                     items.append(Text(""))
                     items.append(Text("  Mitigation suggestions:", style="yellow"))
                     for strategy in self.interference_assessor.suggest_mitigation_strategies()[:3]:
                         items.append(Text(f"    • {strategy}", style="dim"))
                 else:
-                    items.append(Text("  Interference: ", style="white") +
-                                Text("None detected", style="bold green"))
+                    items.append(Text("  Interference: ", style="white") + Text("None detected", style="bold green"))
 
                 # Service order
                 items.append(Text(""))
                 if service_order_ok:
-                    items.append(Text("  Service Order: ", style="white") +
-                                Text("Optimal", style="bold green"))
+                    items.append(Text("  Service Order: ", style="white") + Text("Optimal", style="bold green"))
                 else:
-                    items.append(Text("  Service Order: ", style="white") +
-                                Text("May need adjustment", style="bold yellow"))
+                    items.append(
+                        Text("  Service Order: ", style="white") + Text("May need adjustment", style="bold yellow")
+                    )
 
                 content = build_content(*items)
                 self.tui.update_body(content)
@@ -1262,15 +1268,13 @@ class GuidedSetup:
 
         status_table.add_row(
             "USB NIC Detected",
-            "[bold green]✓[/bold green]" if self.state.detected_usb_nic else "[bold red]✗[/bold red]"
+            "[bold green]✓[/bold green]" if self.state.detected_usb_nic else "[bold red]✗[/bold red]",
         )
         status_table.add_row(
-            "Network Configured",
-            "[bold green]✓[/bold green]" if self.state.configured else "[bold red]✗[/bold red]"
+            "Network Configured", "[bold green]✓[/bold green]" if self.state.configured else "[bold red]✗[/bold red]"
         )
         status_table.add_row(
-            "Target Reachable",
-            "[bold green]✓[/bold green]" if self.state.verified else "[bold yellow]⚠[/bold yellow]"
+            "Target Reachable", "[bold green]✓[/bold green]" if self.state.verified else "[bold yellow]⚠[/bold yellow]"
         )
 
         # Build connection details table
@@ -1290,8 +1294,8 @@ class GuidedSetup:
         next_steps = [
             Text("Next Steps:", style="bold cyan"),
             Text(""),
-            Text(f"  1. Test SSH: ") + Text(f"ssh admin@{device_ip}", style="bold"),
-            Text(f"  2. Test Ansible: ") + Text("ansible target-device -m ping", style="bold"),
+            Text("  1. Test SSH: ") + Text(f"ssh admin@{device_ip}", style="bold"),
+            Text("  2. Test Ansible: ") + Text("ansible target-device -m ping", style="bold"),
             Text("  3. If target device not reachable, check interface configuration"),
             Text("  4. Once target responds, test access to other network devices"),
         ]
@@ -1320,19 +1324,23 @@ class GuidedSetup:
                 self.console.print()
                 self.console.print(conn_table)
             self.console.print()
-            self.console.print(Panel(
-                "\n".join([
-                    "[bold cyan]Next Steps:[/bold cyan]",
-                    "",
-                    f"1. Test SSH: [bold]ssh admin@{device_ip}[/bold]",
-                    "2. Test Ansible: [bold]ansible target-device -m ping[/bold]",
-                    "3. If target device not reachable, check interface configuration",
-                    "4. Once target responds, test access to other network devices",
-                ]),
-                title="What's Next?",
-                border_style="green" if self.state.verified else "yellow",
-                padding=(1, 2)
-            ))
+            self.console.print(
+                Panel(
+                    "\n".join(
+                        [
+                            "[bold cyan]Next Steps:[/bold cyan]",
+                            "",
+                            f"1. Test SSH: [bold]ssh admin@{device_ip}[/bold]",
+                            "2. Test Ansible: [bold]ansible target-device -m ping[/bold]",
+                            "3. If target device not reachable, check interface configuration",
+                            "4. Once target responds, test access to other network devices",
+                        ]
+                    ),
+                    title="What's Next?",
+                    border_style="green" if self.state.verified else "yellow",
+                    padding=(1, 2),
+                )
+            )
 
     def run(self) -> int:
         """Run the guided setup workflow"""
@@ -1343,7 +1351,7 @@ class GuidedSetup:
         self.console.clear()
         self.print_header(
             "USB Management NIC - Guided Setup Wizard",
-            "Interactive step-by-step configuration for out-of-band network access"
+            "Interactive step-by-step configuration for out-of-band network access",
         )
 
         # Check platform support
@@ -1365,7 +1373,8 @@ class GuidedSetup:
 
         try:
             # Check terminal size before entering TUI
-            from .tui import get_terminal_size, MIN_WIDTH, MIN_HEIGHT
+            from .tui import MIN_HEIGHT, MIN_WIDTH, get_terminal_size
+
             width, height = get_terminal_size()
             if width < MIN_WIDTH or height < MIN_HEIGHT:
                 self.print_error(f"Terminal too small ({width}x{height})")
@@ -1388,11 +1397,7 @@ class GuidedSetup:
 
                 # Step 2: Insert USB NIC (with retry - detection can fail)
                 if self.state.current_step < 2:
-                    if not self.run_step_with_retry(
-                        self.step2_insert_usb,
-                        "USB NIC detection",
-                        max_retries=2
-                    ):
+                    if not self.run_step_with_retry(self.step2_insert_usb, "USB NIC detection", max_retries=2):
                         self.save_state()
                         return 1
                     self.state.current_step = 2
@@ -1403,11 +1408,7 @@ class GuidedSetup:
 
                 # Step 3: Connect cable (with retry - link can take time)
                 if self.state.current_step < 3:
-                    if not self.run_step_with_retry(
-                        self.step3_connect_cable,
-                        "Cable connection",
-                        max_retries=1
-                    ):
+                    if not self.run_step_with_retry(self.step3_connect_cable, "Cable connection", max_retries=1):
                         self.save_state()
                         return 1
                     self.state.current_step = 3
@@ -1418,11 +1419,7 @@ class GuidedSetup:
 
                 # Step 4: Configure (with retry - network ops can fail)
                 if self.state.current_step < 4:
-                    if not self.run_step_with_retry(
-                        self.step4_configure,
-                        "Network configuration",
-                        max_retries=1
-                    ):
+                    if not self.run_step_with_retry(self.step4_configure, "Network configuration", max_retries=1):
                         self.save_state()
                         self.suggest_rollback()
                         return 1
@@ -1435,10 +1432,7 @@ class GuidedSetup:
                 # Step 5: Verify (with retry, allow skip - verification is non-fatal)
                 if self.state.current_step < 5:
                     self.run_step_with_retry(
-                        self.step5_verify,
-                        "Connectivity verification",
-                        max_retries=2,
-                        allow_skip=True
+                        self.step5_verify, "Connectivity verification", max_retries=2, allow_skip=True
                     )
                     self.state.current_step = 5
                     self.save_state()
@@ -1502,11 +1496,11 @@ def main() -> int:
 
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S',
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
         handlers=[
-            logging.FileHandler(log_file, mode='w'),
-        ]
+            logging.FileHandler(log_file, mode="w"),
+        ],
     )
 
     # Suppress some noisy loggers

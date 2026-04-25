@@ -3,8 +3,7 @@ Main configurator orchestrating USB NIC setup with safety checks
 """
 
 import logging
-import ipaddress
-from typing import Optional
+from collections.abc import Sequence
 
 from rich.console import Console
 from rich.prompt import Confirm
@@ -13,8 +12,12 @@ from .config import NetworkConfig, NetworkInterface
 from .detectors import USBNICDetector
 from .factory import USBNICDetectorFactory
 from .network_manager import (
-    ServiceOrderManager, WiFiMonitor, InterfaceScorer, RouteManager,
-    InterferenceAssessor, NetworkDashboard
+    InterfaceScorer,
+    InterferenceAssessor,
+    NetworkDashboard,
+    RouteManager,
+    ServiceOrderManager,
+    WiFiMonitor,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,12 +45,12 @@ class USBNICConfigurator:
         self,
         config: NetworkConfig,
         dry_run: bool = False,
-        detector: Optional[USBNICDetector] = None,
+        detector: USBNICDetector | None = None,
         skip_confirmation: bool = False,
         preserve_wifi: bool = False,
         management_location: bool = False,
         show_dashboard: bool = False,
-        forced_interface: Optional[str] = None
+        forced_interface: str | None = None,
     ):
         """
         Initialize configurator.
@@ -79,7 +82,8 @@ class USBNICConfigurator:
     def display_banner(self) -> None:
         """Display configuration banner with mode and settings"""
         mode = "[DRY-RUN MODE]" if self.dry_run else "[CONFIGURATION MODE]"
-        print(f"""
+        print(
+            f"""
 ╔═══════════════════════════════════════════════════════════════╗
 ║          USB Network Auto-Configuration (SAFE)                ║
 ║          {mode:^55}                     ║
@@ -91,9 +95,10 @@ Device IP:     {self.config.device_ip}
 Laptop IP:     {self.config.laptop_ip}
 Netmask:       {self.config.netmask}
 Mgmt Network:  {self.config.mgmt_network}
-""")
+"""
+        )
 
-    def find_best_usb_interface(self) -> Optional[NetworkInterface]:
+    def find_best_usb_interface(self) -> NetworkInterface | None:
         """
         Find best USB interface for configuration.
 
@@ -125,10 +130,7 @@ Mgmt Network:  {self.config.mgmt_network}
         self._display_interfaces(interfaces)
 
         # Filter for non-protected USB interfaces
-        usb_interfaces = [
-            iface for iface in interfaces
-            if iface.is_usb and not iface.is_protected
-        ]
+        usb_interfaces = [iface for iface in interfaces if iface.is_usb and not iface.is_protected]
 
         if not usb_interfaces:
             logger.error("[FAIL] No USB network interfaces found!")
@@ -138,12 +140,16 @@ Mgmt Network:  {self.config.mgmt_network}
         # Use interface scorer for enhanced selection if WiFi preservation is enabled
         if self.preserve_wifi:
             scored_interfaces = self.interface_scorer.rank_interfaces(interfaces)
-            usb_scored = [score for score in scored_interfaces if score.interface_name in [iface.name for iface in usb_interfaces]]
-            
+            usb_scored = [
+                score for score in scored_interfaces if score.interface_name in [iface.name for iface in usb_interfaces]
+            ]
+
             if usb_scored:
                 best_name = usb_scored[0].interface_name
                 best = next(iface for iface in usb_interfaces if iface.name == best_name)
-                logger.info(f"[OK] Selected best USB interface by score: {best.name} (score: {usb_scored[0].score:.1f})")
+                logger.info(
+                    f"[OK] Selected best USB interface by score: {best.name} (score: {usb_scored[0].score:.1f})"
+                )
                 return best
 
         # Fallback to original logic
@@ -159,7 +165,7 @@ Mgmt Network:  {self.config.mgmt_network}
         logger.warning(f"[!] No active USB interfaces, trying: {best.name}")
         return best
 
-    def _display_interfaces(self, interfaces: list[NetworkInterface]) -> None:
+    def _display_interfaces(self, interfaces: Sequence[NetworkInterface]) -> None:
         """Display detected interfaces in formatted table"""
         print("\n╔═══════════════════════════════════════════════════════════════╗")
         print("║                   Detected Interfaces                         ║")
@@ -186,7 +192,8 @@ Mgmt Network:  {self.config.mgmt_network}
         if self.skip_confirmation:
             return True
 
-        print(f"""
+        print(
+            f"""
 ╔═══════════════════════════════════════════════════════════════╗
 ║                   CONFIGURATION CONFIRMATION                  ║
 ╠═══════════════════════════════════════════════════════════════╣
@@ -200,7 +207,8 @@ Mgmt Network:  {self.config.mgmt_network}
 ║   Netmask:    {self.config.netmask:47} ║
 ║   Route:      {self.config.mgmt_network} via {self.config.device_ip:21} ║
 ╚═══════════════════════════════════════════════════════════════╝
-""")
+"""
+        )
 
         if self.dry_run:
             print("[DRY-RUN MODE] No changes will be made\n")
@@ -226,7 +234,7 @@ Mgmt Network:  {self.config.mgmt_network}
         1. Display banner
         2. Find USB interface
         3. Confirm with user
-        4. Preserve WiFi settings (if enabled)
+        4. Preview intended changes in dry-run mode, or preserve WiFi settings if enabled
         5. Configure IP address
         6. Add static route
         7. Test connectivity
@@ -236,6 +244,23 @@ Mgmt Network:  {self.config.mgmt_network}
             True if configuration succeeded and device is reachable
         """
         self.display_banner()
+
+        # Find USB interface
+        interface = self.find_best_usb_interface()
+        if not interface:
+            return False
+
+        # Confirm before proceeding
+        if not self.confirm_configuration(interface):
+            return False
+
+        if self.dry_run:
+            logger.info("[DRY-RUN] Would configure interface")
+            if self.preserve_wifi:
+                logger.info("[DRY-RUN] Would preserve WiFi priority and service order")
+            logger.info("[DRY-RUN] Would add static route")
+            logger.info("[DRY-RUN] Would test connectivity")
+            return True
 
         # WiFi preservation setup
         if self.preserve_wifi:
@@ -265,40 +290,15 @@ Mgmt Network:  {self.config.mgmt_network}
                 for strategy in self.interference_assessor.suggest_mitigation_strategies():
                     logger.info(f"[i] {strategy}")
 
-
-
-        # Find USB interface
-        interface = self.find_best_usb_interface()
-        if not interface:
-            return False
-
-        # Confirm before proceeding
-        if not self.confirm_configuration(interface):
-            return False
-
-        if self.dry_run:
-            logger.info("[DRY-RUN] Would configure interface")
-            logger.info("[DRY-RUN] Would add static route")
-            logger.info("[DRY-RUN] Would test connectivity")
-            return True
-
         # Configure interface
-        if not self.detector.configure_interface(
-            interface.name,
-            self.config.laptop_ip,
-            self.config.netmask
-        ):
+        if not self.detector.configure_interface(interface.name, self.config.laptop_ip, self.config.netmask):
             return False
 
         # Add management route (preserve default gateway)
         if self.preserve_wifi:
             self.route_manager.preserve_default_gateway()
-        
-        self.route_manager.add_management_route(
-            self.config.mgmt_network,
-            interface.name,
-            self.config.device_ip
-        )
+
+        self.route_manager.add_management_route(self.config.mgmt_network, interface.name, self.config.device_ip)
 
         # Test connectivity
         device_ok = self.detector.test_connectivity(self.config.device_ip)
@@ -321,14 +321,10 @@ Mgmt Network:  {self.config.mgmt_network}
 
         return device_ok
 
-    def _display_results(
-        self,
-        interface: NetworkInterface,
-        device_ok: bool,
-        mgmt_ok: bool
-    ) -> None:
+    def _display_results(self, interface: NetworkInterface, device_ok: bool, mgmt_ok: bool) -> None:
         """Display final configuration results"""
-        print(f"""
+        print(
+            f"""
 ╔═══════════════════════════════════════════════════════════════╗
 ║                  Configuration Complete                       ║
 ╠═══════════════════════════════════════════════════════════════╣
@@ -338,20 +334,25 @@ Mgmt Network:  {self.config.mgmt_network}
 ║ Device:       {'[OK] REACHABLE' if device_ok else '[--] NOT REACHABLE':47} ║
 ║ Mgmt Network: {'[OK] REACHABLE' if mgmt_ok else '[!!] NOT REACHABLE':47} ║
 ╚═══════════════════════════════════════════════════════════════╝
-""")
+"""
+        )
 
         if device_ok:
-            print("""
+            print(
+                """
 Next Steps:
 1. ansible all -m ping
 2. ansible-playbook site.yml --tags wan,uplinks,internet
 3. ansible-playbook site.yml --tags validation
-""")
+"""
+            )
         else:
-            print(f"""
+            print(
+                f"""
 Troubleshooting:
 1. Check USB cable connection to {self.config.device_name}
 2. Verify link lights on both ends
 3. Ensure device is powered on
 4. Try manual ping: ping {self.config.device_ip}
-""")
+"""
+            )

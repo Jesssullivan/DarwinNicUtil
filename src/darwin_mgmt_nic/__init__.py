@@ -8,10 +8,10 @@ Version 2.0.0 - Python 3.14+ with modern type system
 __version__ = "2.0.0"
 
 from .config import NetworkConfig, NetworkInterface
+from .configurator import USBNICConfigurator
 from .detectors import USBNICDetector
 from .factory import USBNICDetectorFactory
-from .configurator import USBNICConfigurator
-from .settings import Settings, load_settings, init_config
+from .settings import Settings, init_config, load_settings
 
 __all__ = [
     "NetworkConfig",

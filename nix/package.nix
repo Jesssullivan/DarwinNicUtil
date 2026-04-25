@@ -49,7 +49,7 @@ python3Packages.buildPythonApplication rec {
 
   meta = {
     description = "USB network interface configurator for management access to network devices";
-    homepage = "https://gitlab.com/tinyland/projects/darwin-mgmt-nic-configurator";
+    homepage = "https://github.com/Jesssullivan/DarwinNicUtil";
     license = lib.licenses.zlib;
     maintainers = [ ];
     mainProgram = "darwin-nic";

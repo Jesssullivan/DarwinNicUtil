@@ -2,11 +2,11 @@
 Pytest configuration and shared fixtures
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
 
-from darwin_mgmt_nic.config import NetworkConfig, NetworkInterface, OSType
-from darwin_mgmt_nic.factory import USBNICDetectorFactory
+import pytest
+
+from darwin_mgmt_nic.config import NetworkConfig, NetworkInterface
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def sample_network_config() -> NetworkConfig:
         laptop_ip="192.0.2.100",
         netmask="255.255.255.0",
         mgmt_network="198.51.100.0/24",
-        device_name="Test Device"
+        device_name="Test Device",
     )
 
 
@@ -29,7 +29,7 @@ def alt_network_config() -> NetworkConfig:
         laptop_ip="198.51.100.100",
         netmask="255.255.255.0",
         mgmt_network="203.0.113.0/24",
-        device_name="Secondary Test Device"
+        device_name="Secondary Test Device",
     )
 
 
@@ -43,7 +43,7 @@ def protected_interface() -> NetworkInterface:
         is_active=True,
         is_protected=True,
         current_ip="192.168.1.100",
-        mac_address="aa:bb:cc:dd:ee:ff"
+        mac_address="aa:bb:cc:dd:ee:ff",
     )
 
 
@@ -58,7 +58,7 @@ def usb_interface_active() -> NetworkInterface:
         is_protected=False,
         current_ip=None,
         mac_address="11:22:33:44:55:66",
-        vendor="Realtek"
+        vendor="Realtek",
     )
 
 
@@ -73,14 +73,14 @@ def usb_interface_inactive() -> NetworkInterface:
         is_protected=False,
         current_ip=None,
         mac_address="77:88:99:aa:bb:cc",
-        vendor="ASIX"
+        vendor="ASIX",
     )
 
 
 @pytest.fixture
 def mock_macos_detector():
     """Mock macOS detector with pre-configured interfaces"""
-    with patch('darwin_mgmt_nic.macos.MacOSUSBNICDetector') as mock:
+    with patch("darwin_mgmt_nic.macos.MacOSUSBNICDetector") as mock:
         detector = MagicMock()
         detector.detect_interfaces.return_value = [
             NetworkInterface(
@@ -90,7 +90,7 @@ def mock_macos_detector():
                 is_active=True,
                 is_protected=True,
                 current_ip="192.168.1.100",
-                mac_address="aa:bb:cc:dd:ee:ff"
+                mac_address="aa:bb:cc:dd:ee:ff",
             ),
             NetworkInterface(
                 name="en7",
@@ -100,7 +100,7 @@ def mock_macos_detector():
                 is_protected=False,
                 current_ip=None,
                 mac_address="11:22:33:44:55:66",
-                vendor="Realtek"
+                vendor="Realtek",
             ),
         ]
         detector.get_interface_status.return_value = True
@@ -115,7 +115,7 @@ def mock_macos_detector():
 @pytest.fixture
 def mock_subprocess_networksetup():
     """Mock subprocess for networksetup command"""
-    with patch('subprocess.run') as mock_run:
+    with patch("subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout="""Hardware Port: Wi-Fi
@@ -126,7 +126,7 @@ Hardware Port: USB 10/100/1000 LAN
 Device: en7
 Ethernet Address: 11:22:33:44:55:66
 """,
-            stderr=""
+            stderr="",
         )
         yield mock_run
 
@@ -134,7 +134,7 @@ Ethernet Address: 11:22:33:44:55:66
 @pytest.fixture
 def mock_subprocess_ifconfig():
     """Mock subprocess for ifconfig command"""
-    with patch('subprocess.run') as mock_run:
+    with patch("subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout="""en7: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500
@@ -142,6 +142,6 @@ def mock_subprocess_ifconfig():
 \tinet 192.0.2.100 netmask 0xffffff00 broadcast 192.0.2.255
 \tstatus: active
 """,
-            stderr=""
+            stderr="",
         )
         yield mock_run
