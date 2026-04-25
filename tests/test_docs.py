@@ -195,6 +195,10 @@ def test_project_spec_is_public_and_generic():
     assert "PyPI trusted publishing is staged" in spec
     assert "Coverage gate ratcheted to 50 percent" in spec
     assert "Consumers own their own device names, secrets, and recovery policy" in spec
+    assert "Boundary Decisions" in spec
+    assert "ABR-style approval keepalives and scripted approvers are out of scope" in spec
+    assert "Sophos, ZTNA, CryptoGuard" in spec
+    assert "should not ship adversarial compliance modules" in spec
 
     forbidden = [
         "crs309-main",
