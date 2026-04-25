@@ -3,6 +3,8 @@
 DarwinNicUtil is a Python CLI for configuring USB network interfaces for
 out-of-band management access while preserving Wi-Fi and tailnet connectivity.
 
+Public docs: https://transscendsurvival.org/DarwinNicUtil/
+
 Primary docs:
 
 - `README.md`: install, usage, safety features, and development commands.

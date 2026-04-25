@@ -4,6 +4,9 @@ Get a USB management NIC configured without letting it take over normal Wi-Fi or
 
 ## Installation
 
+Use PyPI for the normal CLI, FlakeHub for stable Nix use, and source checkout
+only when developing or validating local changes.
+
 === "PyPI"
 
     ```bash
@@ -33,16 +36,6 @@ Get a USB management NIC configured without letting it take over normal Wi-Fi or
 
     uv sync --extra dev
     uv run darwin-nic setup
-    ```
-
-=== "uv Tool"
-
-    ```bash
-    git clone https://github.com/Jesssullivan/DarwinNicUtil.git
-    cd DarwinNicUtil
-
-    uv tool install .
-    darwin-nic setup
     ```
 
 ## Interactive Setup
@@ -147,6 +140,16 @@ darwin-nic dashboard
 If `status` shows the USB interface missing from `scutil --nwi` while the
 Tailscale system extension is active, ordinary sockets may be blocked by macOS
 NECP even though link-layer tools and ARP still work.
+
+## Integration Surfaces
+
+| Surface | Use |
+|---------|-----|
+| `~/.config/darwin-nic/config.toml` | User profile and defaults file |
+| `nix/modules/home-manager.nix` | Home Manager module for profile-driven installs |
+| `nix/modules/system-manager.nix` | Linux System Manager module |
+| `docs/llms.txt` | Compact agent-facing repo summary |
+| `AGENTS.md` | Repo boundaries and validation rules |
 
 ## Troubleshooting
 

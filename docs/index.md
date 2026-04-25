@@ -18,20 +18,32 @@ belong in downstream operator repositories.
 For the public release shape and productionization summary, see the
 [project spec](project-spec.md).
 
+Public artifact URLs:
+
+- Docs: <https://transscendsurvival.org/DarwinNicUtil/>
+- PyPI: <https://pypi.org/project/darwin-mgmt-nic-configurator/>
+- GitHub Releases: <https://github.com/Jesssullivan/DarwinNicUtil/releases>
+- FlakeHub: <https://flakehub.com/f/Jesssullivan/DarwinNicUtil>
+
 ## Quick Start
 
 ```bash
+# Recommended CLI install
+uv tool install darwin-mgmt-nic-configurator
+darwin-nic status
+
 # Stable release from FlakeHub
 nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" -- status
-
-# Direct GitHub flake reference
-nix run github:Jesssullivan/DarwinNicUtil -- status
-nix run github:Jesssullivan/DarwinNicUtil -- configure \
-  --device-ip 192.168.88.1 \
-  --laptop-ip 192.168.88.100 \
-  --mgmt-network 192.168.88.0/24 \
-  --preserve-wifi
 ```
+
+## Install Path Matrix
+
+| Path | Best For | Command |
+|------|----------|---------|
+| PyPI | Normal CLI install | `uv tool install darwin-mgmt-nic-configurator` |
+| FlakeHub | Stable Nix install or one-shot run | `nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" -- status` |
+| GitHub flake | Current repository state | `nix run github:Jesssullivan/DarwinNicUtil -- status` |
+| Source checkout | Development and local validation | `uv sync --extra dev && uv run darwin-nic status` |
 
 From a checkout:
 
