@@ -2,10 +2,10 @@
 USB Network Interface Configurator Package
 USB NIC detection and configuration with factory pattern
 
-Version 2.1.0 - Python 3.14+ with modern type system
+Version 2.1.1 - Python 3.14+ with modern type system
 """
 
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 
 from .config import NetworkConfig, NetworkInterface
 from .configurator import USBNICConfigurator

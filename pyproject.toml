@@ -1,6 +1,6 @@
 [project]
 name = "darwin-mgmt-nic-configurator"
-version = "2.1.0"
+version = "2.1.1"
 description = "Darwin USB network interface configurator for management access to network devices"
 readme = "README.md"
 requires-python = ">=3.14"
