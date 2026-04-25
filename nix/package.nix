@@ -6,7 +6,7 @@
 
 python3Packages.buildPythonApplication rec {
   pname = "darwin-nic";
-  version = "2.1.1";
+  version = "2.1.2";
   pyproject = true;
 
   src = lib.cleanSource ./..;

@@ -93,7 +93,7 @@ Current validated surfaces:
 - PyPI distribution for `darwin-mgmt-nic-configurator`.
 - GitHub Release with wheel and source distribution artifacts.
 - Nix flake package outputs.
-- FlakeHub release `v2.1.1` and rolling channel.
+- FlakeHub release `v2.1.2` and rolling channel.
 - MkDocs site published by GitHub Pages.
 
 Staged or deferred surfaces:
@@ -114,7 +114,7 @@ The post-v2.1 hardening pass added:
   and development.
 - Agent-facing docs in `AGENTS.md` and `docs/llms.txt`.
 - FlakeHub publication workflow and documented release reference.
-- PyPI trusted publishing and validated `2.1.1` upload.
+- PyPI trusted publishing and validated `2.1.2` upload.
 - Explicit artifact policy for PyPI, binaries, Homebrew, and Bazel/BCR.
 - Coverage gate ratcheted to 50 percent, with current coverage above 55
   percent.

@@ -33,7 +33,7 @@ uv tool install darwin-mgmt-nic-configurator
 darwin-nic status
 
 # Stable release from FlakeHub
-nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" -- status
+nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.2" -- status
 ```
 
 ## Install Path Matrix
@@ -41,7 +41,7 @@ nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" -- status
 | Path | Best For | Command |
 |------|----------|---------|
 | PyPI | Normal CLI install | `uv tool install darwin-mgmt-nic-configurator` |
-| FlakeHub | Stable Nix install or one-shot run | `nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" -- status` |
+| FlakeHub | Stable Nix install or one-shot run | `nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.2" -- status` |
 | GitHub flake | Current repository state | `nix run github:Jesssullivan/DarwinNicUtil -- status` |
 | Source checkout | Development and local validation | `uv sync --extra dev && uv run darwin-nic status` |
 

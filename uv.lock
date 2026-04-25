@@ -168,7 +168,7 @@ wheels = [
 
 [[package]]
 name = "darwin-mgmt-nic-configurator"
-version = "2.1.1"
+version = "2.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "rich" },

@@ -145,11 +145,11 @@ def test_artifacts_docs_match_current_release_policy():
     assert "`MODULE.bazel` or `BUILD.bazel` consumer" in artifacts
     assert "Do not introduce Bazel as a default local build" in artifacts
     assert "FlakeHub releases" in artifacts
-    assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" in artifacts
+    assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.2" in artifacts
     assert "current public" in artifacts
-    assert "FlakeHub releases are `v2.1.1`" in artifacts
+    assert "FlakeHub releases are `v2.1.2`" in artifacts
     assert "nix run github:Jesssullivan/DarwinNicUtil -- status" in artifacts
-    assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" in readme
+    assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.2" in readme
     assert "PyPI distribution for `darwin-mgmt-nic-configurator`" in readme
     assert "GitHub Release, PyPI, FlakeHub, and docs workflows" in readme
     assert "https://transscendsurvival.org/DarwinNicUtil/" in artifacts
@@ -172,7 +172,7 @@ def test_pypi_publish_surface_is_live_and_documented():
     assert "darwin-mgmt-nic-configurator" in artifacts
     assert "PyPI publication is live" in artifacts
     assert "uv tool install darwin-mgmt-nic-configurator" in artifacts
-    assert "latest validated upload is `2.1.1`" in artifacts
+    assert "latest validated upload is `2.1.2`" in artifacts
     assert "The completed cutover path was" in artifacts
     assert "Verify the GitHub repository environment is named `pypi`" in artifacts
     assert "Do not move or reuse the existing `v2.1.0` tag" in artifacts
@@ -218,7 +218,7 @@ def test_project_spec_is_public_and_generic():
     assert "Project Spec: project-spec.md" in mkdocs
     assert "docs/project-spec.md" in llms
     assert "Productionization Results" in spec
-    assert "PyPI trusted publishing and validated `2.1.1` upload" in spec
+    assert "PyPI trusted publishing and validated `2.1.2` upload" in spec
     assert "Coverage gate ratcheted to 50 percent" in spec
     assert "Consumers own their own device names, secrets, and recovery policy" in spec
     assert "Boundary Decisions" in spec
@@ -252,7 +252,7 @@ def test_root_entrypoint_uses_package_app_version():
         check=True,
     )
 
-    assert result.stdout.strip() == "darwin-nic 2.1.1"
+    assert result.stdout.strip() == "darwin-nic 2.1.2"
 
 
 def test_binary_build_script_is_local_smoke_test_only():
