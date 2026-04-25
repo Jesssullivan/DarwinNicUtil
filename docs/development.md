@@ -89,7 +89,7 @@ GitHub Actions now own the public validation path:
 | `ci.yml` | Format, lint, type-check, tests, docs build, package build |
 | `secret-detection.yml` | Gitleaks and TruffleHog scanning |
 | `docs.yml` | MkDocs build and GitHub Pages artifact upload |
-| `release.yml` | Tag-triggered wheel/source distribution, GitHub Release, and staged PyPI publish |
+| `release.yml` | Tag-triggered wheel/source distribution, GitHub Release, and PyPI publish |
 
 GitLab CI remains in the repository for compatibility, but GitHub is the
 release-facing surface.
@@ -109,12 +109,11 @@ nix flake check
 Then tag from a clean, reviewed branch:
 
 ```bash
-git tag -a v2.1.0 -m "Release v2.1.0"
-git push origin v2.1.0
+git tag -a v2.1.1 -m "Release v2.1.1"
+git push origin v2.1.1
 ```
 
 The release workflow attaches only wheel and source distribution files from
-`dist/` to the GitHub Release. It also contains the PyPI trusted-publishing job
-for tag builds; configure the PyPI pending publisher for
-`release.yml`/`pypi` before relying on it. Standalone binary distribution
-remains a follow-up release task.
+`dist/` to the GitHub Release. It also publishes to PyPI through trusted
+publishing for tag builds. Standalone binary distribution remains a follow-up
+release task.
