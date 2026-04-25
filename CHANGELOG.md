@@ -4,6 +4,10 @@ All notable changes to DarwinNicUtil are recorded here.
 
 ## Unreleased
 
+- No changes yet.
+
+## 2.1.0 - 2026-04-25
+
 ### CI/CD
 
 - Add GitHub Actions CI, docs deployment, secret scanning, and release workflow scaffolding.
