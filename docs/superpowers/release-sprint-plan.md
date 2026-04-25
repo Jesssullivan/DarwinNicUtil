@@ -110,7 +110,7 @@ them as complete.
 The v2.1.0 release should publish:
 
 - wheel and source distribution from `uv build`;
-- GitHub Release notes and attached `dist/*` artifacts;
+- GitHub Release notes with attached wheel and source distribution artifacts;
 - MkDocs site through GitHub Pages;
 - Nix package availability through the flake.
 
