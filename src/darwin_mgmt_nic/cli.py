@@ -12,6 +12,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
+from . import __version__
 from .config import NetworkConfig
 from .configurator import USBNICConfigurator
 from .factory import USBNICDetectorFactory
@@ -107,7 +108,7 @@ Examples:
         "--fix-vpn-issues", action="store_true", help="Fix network priority and DNS issues caused by VPN connections"
     )
 
-    parser.add_argument("--version", action="version", version="USB NIC Configurator 2.0.0")
+    parser.add_argument("--version", action="version", version=f"USB NIC Configurator {__version__}")
 
     return parser
 

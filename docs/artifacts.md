@@ -79,6 +79,29 @@ The release workflow runs on tags matching `v*.*.*`. It builds the Python
 distribution files and attaches only the wheel and source distribution to the
 GitHub Release.
 
+## Standalone Binary Policy
+
+Standalone binaries are not supported release artifacts yet. The local
+PyInstaller path is useful for smoke testing, and the current macOS arm64 build
+has been validated with `darwin-nic --version` and `darwin-nic --help`, but the
+release workflow does not attach binary archives or checksums.
+
+Build and smoke-test a local binary with:
+
+```bash
+just build-binary
+```
+
+The expected local output is:
+
+```text
+dist/darwin-nic
+```
+
+Do not document standalone binaries as a public install path until CI builds
+the artifact, tests it, produces checksums, and the signing/notarization policy
+is explicit.
+
 ## PyPI Trusted Publishing
 
 PyPI publication is staged in the release workflow, but it is not a supported

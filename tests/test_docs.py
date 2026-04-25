@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -121,6 +123,9 @@ def test_artifacts_docs_match_current_release_policy():
     assert "Nix packages" in artifacts
     assert "Standalone binary" in artifacts
     assert "not validated yet" in artifacts
+    assert "Standalone binaries are not supported release artifacts yet" in artifacts
+    assert "just build-binary" in artifacts
+    assert "signing/notarization policy" in artifacts
     assert "Homebrew | Deferred" in artifacts
     assert "no active DarwinNicUtil tap/formula path" in artifacts
     assert "DarwinNicUtil does not ship a Bazel or Bzlmod module today" in artifacts
@@ -160,6 +165,33 @@ def test_pypi_publish_surface_is_staged_but_not_overclaimed():
     assert "password:" not in release_workflow
     assert "pipx install darwin-mgmt-nic-configurator" not in readme
     assert "pipx install darwin-mgmt-nic-configurator" not in quickstart
+
+
+def test_root_entrypoint_uses_package_app_version():
+    script = (REPO_ROOT / "darwin-nic").read_text()
+    backend_cli = (REPO_ROOT / "src" / "darwin_mgmt_nic" / "cli.py").read_text()
+
+    assert "darwin_mgmt_nic.app" in script
+    assert "2.0.0" not in script
+    assert "USB NIC Configurator 2.0.0" not in backend_cli
+
+    result = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "darwin-nic"), "--version"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    assert result.stdout.strip() == "darwin-nic 2.1.0"
+
+
+def test_binary_build_script_is_local_smoke_test_only():
+    build_script = (REPO_ROOT / "scripts" / "build.sh").read_text()
+
+    assert "uv run --with pyinstaller --with setuptools pyinstaller" in build_script
+    assert "shasum -a 256 dist/darwin-nic" in build_script
+    assert "local smoke-test artifact" in build_script
+    assert "pip install -r build-requirements.txt" not in build_script
 
 
 def test_example_profile_networks_are_internally_consistent():
