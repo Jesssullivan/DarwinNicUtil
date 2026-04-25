@@ -28,7 +28,7 @@ darwin-nic init-config
 darwin-nic configure --profile homelab --preserve-wifi
 
 # Run without installing, using the stable FlakeHub release
-nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" -- status
+nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.2" -- status
 ```
 
 For a one-off setup without a saved profile:
@@ -46,7 +46,7 @@ darwin-nic configure \
 | Path | Use When | Command |
 |------|----------|---------|
 | PyPI | You want the normal CLI on your PATH | `uv tool install darwin-mgmt-nic-configurator` |
-| FlakeHub | You want a stable Nix release | `nix profile install "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1"` |
+| FlakeHub | You want a stable Nix release | `nix profile install "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.2"` |
 | GitHub flake | You want the current repository flake | `nix profile install github:Jesssullivan/DarwinNicUtil` |
 | Source checkout | You are developing or testing local changes | `uv sync --extra dev && uv run darwin-nic status` |
 
@@ -152,7 +152,7 @@ Current release artifacts are:
 
 - PyPI distribution for `darwin-mgmt-nic-configurator`;
 - GitHub Release wheel and source distribution files;
-- Nix flake package outputs, including FlakeHub `v2.1.1`;
+- Nix flake package outputs, including FlakeHub `v2.1.2`;
 - MkDocs site artifacts from the docs workflow.
 
 GitHub Release, PyPI, FlakeHub, and docs workflows are present for tag-based

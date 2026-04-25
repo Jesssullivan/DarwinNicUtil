@@ -48,7 +48,7 @@ Downstream Home Manager users should consume the flake input and install
 The stable FlakeHub release reference is:
 
 ```bash
-nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" -- status
+nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.2" -- status
 ```
 
 The direct GitHub flake reference remains supported:
@@ -60,7 +60,7 @@ nix run github:Jesssullivan/DarwinNicUtil -- status
 FlakeHub publication runs through the `Publish to FlakeHub` GitHub Actions
 workflow. Tagged releases publish from `v*.*.*` tags, and maintainers can run a
 manual rolling validation from the workflow dispatch form. The current public
-FlakeHub releases are `v2.1.1` and the rolling `*` channel.
+FlakeHub releases are `v2.1.2` and the rolling `*` channel.
 
 ## Documentation Site
 
@@ -118,7 +118,7 @@ is explicit.
 ## PyPI
 
 PyPI publication is live for `darwin-mgmt-nic-configurator` through trusted
-publishing. The latest validated upload is `2.1.1`. Install with:
+publishing. The latest validated upload is `2.1.2`. Install with:
 
 ```bash
 uv tool install darwin-mgmt-nic-configurator
@@ -141,7 +141,7 @@ The project was created through a PyPI pending publisher using these values:
 
 The release workflow uses GitHub OIDC with `pypa/gh-action-pypi-publish` and
 does not use a stored PyPI API token. README and quickstart now include PyPI
-install commands because the `v2.1.1` upload has been validated.
+install commands because the `v2.1.2` upload has been validated.
 
 The completed cutover path was:
 
