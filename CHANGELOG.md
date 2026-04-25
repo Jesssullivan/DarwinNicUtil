@@ -4,6 +4,19 @@ All notable changes to DarwinNicUtil are recorded here.
 
 ## Unreleased
 
+- No unreleased changes.
+
+## 2.1.1 - 2026-04-25
+
+- Stage the post-v2.1.0 PyPI cutover release.
+- Add PyPI project metadata links for documentation, changelog, releases, and
+  FlakeHub.
+- Document the PyPI trusted-publishing cutover checklist.
+- Keep PyPI install commands out of README and quickstart until the first
+  upload is validated.
+
+## 2.1.0 - 2026-04-25
+
 - Restrict future release workflow uploads to wheel and source distribution
   artifacts only.
 - Clarify release artifact docs so they describe only wheel and source
@@ -11,8 +24,6 @@ All notable changes to DarwinNicUtil are recorded here.
 - Track post-v2.1 distribution follow-ups for PyPI, standalone binaries,
   Homebrew, FlakeHub, and Bazel/BCR without advertising unproven install paths.
 - Mark Homebrew as deferred until a supported PyPI or standalone artifact exists.
-
-## 2.1.0 - 2026-04-25
 
 ### CI/CD
 

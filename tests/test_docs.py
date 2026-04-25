@@ -236,7 +236,7 @@ def test_root_entrypoint_uses_package_app_version():
         check=True,
     )
 
-    assert result.stdout.strip() == "darwin-nic 2.1.0"
+    assert result.stdout.strip() == "darwin-nic 2.1.1"
 
 
 def test_binary_build_script_is_local_smoke_test_only():
