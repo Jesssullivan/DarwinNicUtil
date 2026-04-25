@@ -48,7 +48,7 @@ Downstream Home Manager users should consume the flake input and install
 The stable FlakeHub release reference is:
 
 ```bash
-nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" -- status
+nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" -- status
 ```
 
 The direct GitHub flake reference remains supported:
@@ -60,7 +60,7 @@ nix run github:Jesssullivan/DarwinNicUtil -- status
 FlakeHub publication runs through the `Publish to FlakeHub` GitHub Actions
 workflow. Tagged releases publish from `v*.*.*` tags, and maintainers can run a
 manual rolling validation from the workflow dispatch form. The current public
-FlakeHub releases are `v2.1.0` and the rolling `*` channel.
+FlakeHub releases are `v2.1.1` and the rolling `*` channel.
 
 ## Documentation Site
 
@@ -105,7 +105,7 @@ is explicit.
 ## PyPI
 
 PyPI publication is live for `darwin-mgmt-nic-configurator` through trusted
-publishing. Install with:
+publishing. The latest validated upload is `2.1.1`. Install with:
 
 ```bash
 uv tool install darwin-mgmt-nic-configurator
@@ -130,7 +130,8 @@ The completed cutover path was:
    owner, repository, workflow, and environment values in the table.
 2. Verify the GitHub repository environment is named `pypi`; the workflow
    publisher identity depends on that environment string.
-3. Prepare a new release version after `v2.1.0`, such as `v2.1.1`.
+3. Prepare a new release version after the last non-PyPI tag; `v2.1.1` was
+   used for the first upload after `v2.1.0`.
 4. Do not move or reuse the existing `v2.1.0` tag for the first PyPI upload.
    The release workflow is loaded from the tagged commit, and `v2.1.0`
    predates the PyPI publishing job.
@@ -143,13 +144,12 @@ The completed cutover path was:
 
 7. README and quickstart install commands were added after verification.
 
-## Not Yet Primary Artifacts
+## Deferred and Non-Primary Surfaces
 
 | Surface | Current status |
 |---------|----------------|
-| PyPI | Supported through trusted publishing; latest validated upload is `2.1.1` |
 | Standalone binary | PyInstaller spec exists, but binary releases are not validated yet; tracked in [GitHub #9](https://github.com/Jesssullivan/DarwinNicUtil/issues/9) |
-| Homebrew | Deferred; there is no active DarwinNicUtil tap/formula path until PyPI or standalone artifacts are proven, with the decision recorded in [GitHub #10](https://github.com/Jesssullivan/DarwinNicUtil/issues/10) |
+| Homebrew | Deferred; there is no active DarwinNicUtil tap/formula path, with the decision recorded in [GitHub #10](https://github.com/Jesssullivan/DarwinNicUtil/issues/10) |
 | Bazel / BCR | Not a primary install path; evaluate only if a real downstream Bazel/Bzlmod consumer needs it, tracked in [GitHub #17](https://github.com/Jesssullivan/DarwinNicUtil/issues/17) |
 | Container image | Not applicable for the CLI today |
 

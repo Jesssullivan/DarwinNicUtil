@@ -15,7 +15,7 @@ Get a USB management NIC configured without letting it take over normal Wi-Fi or
 
     ```bash
     # Stable release
-    nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" -- setup
+    nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" -- setup
 
     # Direct GitHub flake reference
     nix run github:Jesssullivan/DarwinNicUtil -- configure \

@@ -4,7 +4,10 @@ All notable changes to DarwinNicUtil are recorded here.
 
 ## Unreleased
 
-- No unreleased changes.
+- Refresh public install and artifact docs around the validated `v2.1.1` PyPI
+  and FlakeHub release surfaces.
+- Move PyPI out of the deferred artifact policy after the trusted-publishing
+  upload succeeded.
 
 ## 2.1.1 - 2026-04-25
 

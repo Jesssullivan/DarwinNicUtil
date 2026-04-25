@@ -132,6 +132,9 @@ def test_artifacts_docs_match_current_release_policy():
     assert "Standalone binaries are not supported release artifacts yet" in artifacts
     assert "just build-binary" in artifacts
     assert "signing/notarization policy" in artifacts
+    assert "Deferred and Non-Primary Surfaces" in artifacts
+    assert "Not Yet Primary Artifacts" not in artifacts
+    assert "| PyPI |" not in artifacts
     assert "Homebrew | Deferred" in artifacts
     assert "no active DarwinNicUtil tap/formula path" in artifacts
     assert "DarwinNicUtil does not ship a Bazel or Bzlmod module today" in artifacts
@@ -139,11 +142,11 @@ def test_artifacts_docs_match_current_release_policy():
     assert "`MODULE.bazel` or `BUILD.bazel` consumer" in artifacts
     assert "Do not introduce Bazel as a default local build" in artifacts
     assert "FlakeHub releases" in artifacts
-    assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" in artifacts
+    assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" in artifacts
     assert "current public" in artifacts
-    assert "FlakeHub releases are `v2.1.0`" in artifacts
+    assert "FlakeHub releases are `v2.1.1`" in artifacts
     assert "nix run github:Jesssullivan/DarwinNicUtil -- status" in artifacts
-    assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" in readme
+    assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" in readme
     assert "PyPI distribution for `darwin-mgmt-nic-configurator`" in readme
     assert "GitHub Release, PyPI, FlakeHub, and docs workflows" in readme
 
