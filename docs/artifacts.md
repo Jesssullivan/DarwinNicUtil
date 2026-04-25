@@ -58,8 +58,9 @@ Pages artifact.
 
 ## GitHub Release
 
-The release workflow runs on tags matching `v*.*.*`. It builds `dist/*` and
-attaches the wheel and source distribution to the GitHub Release.
+The release workflow runs on tags matching `v*.*.*`. It builds the Python
+distribution files and attaches only the wheel and source distribution to the
+GitHub Release.
 
 ## Not Yet Primary Artifacts
 
