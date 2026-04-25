@@ -19,6 +19,7 @@ All notable changes to DarwinNicUtil are recorded here.
 - Add artifact policy documentation for wheel/source distributions, Nix packages, MkDocs, and non-primary binary/PyPI surfaces.
 - Tighten README and MkDocs wording for accuracy, brevity, and generic repository boundaries.
 - Correct stale architecture references to removed or nonexistent entry points.
+- Scope Sophos and ABR feature ideas as deferred spikes outside the v2.1.0 release readiness lane.
 
 ### Testing
 
