@@ -11,6 +11,7 @@ Primary docs:
 - `docs/bastion.md`: generic bastion/OOB operator flow and boundaries.
 - `docs/artifacts.md`: current release artifact policy, including GitHub
   Releases and FlakeHub.
+- `docs/project-spec.md`: public project spec and productionization summary.
 - `docs/architecture.md`: module structure and safety architecture.
 - `docs/superpowers/release-sprint-plan.md`: release-readiness sprint plan.
 

@@ -15,6 +15,9 @@ preserving the host's normal Wi-Fi and tailnet path.
 Device-specific topology, credentials, switch commands, and recovery policy
 belong in downstream operator repositories.
 
+For the public release shape and productionization summary, see the
+[project spec](project-spec.md).
+
 ## Quick Start
 
 ```bash
