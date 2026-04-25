@@ -6,6 +6,8 @@ All notable changes to DarwinNicUtil are recorded here.
 
 - Restrict future release workflow uploads to wheel and source distribution
   artifacts only.
+- Clarify release artifact docs so they describe only wheel and source
+  distribution uploads.
 
 ## 2.1.0 - 2026-04-25
 
