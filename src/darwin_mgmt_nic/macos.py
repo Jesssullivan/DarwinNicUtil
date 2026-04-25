@@ -2,18 +2,17 @@
 macOS-specific USB NIC detection and configuration
 """
 
-import subprocess
-import re
 import logging
 import os
-import sys
+import re
+import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Optional, Sequence
-from rich.console import Console
-from rich.prompt import Prompt
 
+from rich.console import Console
+
+from .config import InterfaceName, IPAddress, NetworkInterface
 from .detectors import USBNICDetector
-from .config import NetworkInterface, InterfaceName, IPAddress
 
 logger = logging.getLogger(__name__)
 console = Console()
@@ -30,7 +29,7 @@ class BastionDiagnostics:
     recent_necp_drop: bool
 
 
-def run_sudo_command(cmd: Sequence[str], timeout: int = 30, check: bool = True) -> subprocess.CompletedProcess:
+def run_sudo_command(cmd: Sequence[str], timeout: int = 30, check: bool = True) -> subprocess.CompletedProcess[str]:
     """Run sudo command with proper password handling"""
     # Check if we're already root
     if os.geteuid() == 0:
@@ -62,11 +61,8 @@ def run_sudo_command(cmd: Sequence[str], timeout: int = 30, check: bool = True) 
 
 
 def run_sudo_command_tui_safe(
-    cmd: Sequence[str],
-    timeout: int = 30,
-    check: bool = True,
-    tui_active: bool = False
-) -> subprocess.CompletedProcess:
+    cmd: Sequence[str], timeout: int = 30, check: bool = True, tui_active: bool = False
+) -> subprocess.CompletedProcess[str]:
     """
     Run sudo command with TUI state management.
 
@@ -97,13 +93,7 @@ def run_sudo_command_tui_safe(
 
     try:
         # Run with output capture for TUI mode (prevents terminal corruption)
-        result = subprocess.run(
-            full_cmd,
-            timeout=timeout,
-            check=False,
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run(full_cmd, timeout=timeout, check=False, capture_output=True, text=True)
 
         if check and result.returncode != 0:
             # Check if failure was due to sudo auth timeout
@@ -112,12 +102,7 @@ def run_sudo_command_tui_safe(
                     "Sudo authentication expired during TUI operation. "
                     "This is a bug - sudo should have been pre-authenticated."
                 )
-            raise subprocess.CalledProcessError(
-                result.returncode,
-                full_cmd,
-                result.stdout,
-                result.stderr
-            )
+            raise subprocess.CalledProcessError(result.returncode, full_cmd, result.stdout, result.stderr)
 
         return result
 
@@ -146,13 +131,33 @@ class MacOSUSBNICDetector(USBNICDetector):
     """
 
     # USB NIC vendor identifiers (comprehensive list)
-    USB_VENDOR_KEYWORDS: frozenset[str] = frozenset({
-        "usb ethernet", "usb 10/100", "usb gigabit", "usb 2.5g", "usb 5g",
-        "realtek", "asix", "apple usb", "belkin usb", "startech",
-        "plugable", "cable matters", "anker usb", "tp-link usb",
-        "ugreen", "j5create", "sabrent", "iogear", "trendnet usb",
-        "monoprice", "insignia usb", "dell usb", "lenovo usb",
-    })
+    USB_VENDOR_KEYWORDS: frozenset[str] = frozenset(
+        {
+            "usb ethernet",
+            "usb 10/100",
+            "usb gigabit",
+            "usb 2.5g",
+            "usb 5g",
+            "realtek",
+            "asix",
+            "apple usb",
+            "belkin usb",
+            "startech",
+            "plugable",
+            "cable matters",
+            "anker usb",
+            "tp-link usb",
+            "ugreen",
+            "j5create",
+            "sabrent",
+            "iogear",
+            "trendnet usb",
+            "monoprice",
+            "insignia usb",
+            "dell usb",
+            "lenovo usb",
+        }
+    )
 
     # Minimum interface number to consider as USB (heuristic)
     MIN_USB_INTERFACE_NUMBER = 5
@@ -171,7 +176,7 @@ class MacOSUSBNICDetector(USBNICDetector):
         cmd: Sequence[str],
         timeout: int = 30,
         check: bool = True,
-    ) -> subprocess.CompletedProcess:
+    ) -> subprocess.CompletedProcess[str]:
         """
         Run a privileged command using the right sudo contract for the current mode.
 
@@ -198,15 +203,11 @@ class MacOSUSBNICDetector(USBNICDetector):
 
         try:
             result = subprocess.run(
-                ["networksetup", "-listallhardwareports"],
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=10
+                ["networksetup", "-listallhardwareports"], capture_output=True, text=True, check=True, timeout=10
             )
 
-            current_port: Optional[str] = None
-            current_device: Optional[InterfaceName] = None
+            current_port: str | None = None
+            current_device: InterfaceName | None = None
 
             for line in result.stdout.splitlines():
                 if line.startswith("Hardware Port:"):
@@ -226,12 +227,7 @@ class MacOSUSBNICDetector(USBNICDetector):
             logger.warning(f"networksetup detection failed: {e}")
 
         # Sort: USB + active first, protected last
-        interfaces.sort(key=lambda iface: (
-            not iface.is_usb,
-            not iface.is_active,
-            iface.is_protected,
-            iface.name
-        ))
+        interfaces.sort(key=lambda iface: (not iface.is_usb, not iface.is_active, iface.is_protected, iface.name))
 
         return interfaces
 
@@ -254,7 +250,7 @@ class MacOSUSBNICDetector(USBNICDetector):
             is_protected=is_protected,
             current_ip=current_ip,
             mac_address=mac,
-            vendor=vendor
+            vendor=vendor,
         )
 
     def _is_usb_adapter(self, port_name: str, device_name: InterfaceName) -> bool:
@@ -292,20 +288,20 @@ class MacOSUSBNICDetector(USBNICDetector):
     def _is_wifi_adapter(self, port_name: str, device_name: InterfaceName) -> bool:
         """Determine if interface is a WiFi adapter"""
         port_lower = port_name.lower()
-        
+
         # Check for WiFi keywords in port name
         wifi_keywords = ["wi-fi", "wifi", "airport", "wireless", "802.11"]
         for keyword in wifi_keywords:
             if keyword in port_lower:
                 return True
-        
+
         # Check common WiFi interface names
         if device_name in ["en0", "en1"]:  # Common WiFi interfaces on Mac
             return "wi-fi" in port_lower.lower()
-        
+
         return False
 
-    def _extract_vendor(self, port_name: str) -> Optional[str]:
+    def _extract_vendor(self, port_name: str) -> str | None:
         """Extract vendor name from hardware port string"""
         port_lower = port_name.lower()
 
@@ -329,16 +325,10 @@ class MacOSUSBNICDetector(USBNICDetector):
 
         return None
 
-    def _get_interface_ip(self, interface: InterfaceName) -> Optional[IPAddress]:
+    def _get_interface_ip(self, interface: InterfaceName) -> IPAddress | None:
         """Get current IPv4 address of interface"""
         try:
-            result = subprocess.run(
-                ["ifconfig", interface],
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=5
-            )
+            result = subprocess.run(["ifconfig", interface], capture_output=True, text=True, check=True, timeout=5)
 
             for line in result.stdout.splitlines():
                 # Look for "inet <ip>" (not inet6)
@@ -352,16 +342,10 @@ class MacOSUSBNICDetector(USBNICDetector):
 
         return None
 
-    def _get_mac_address(self, interface: InterfaceName) -> Optional[str]:
+    def _get_mac_address(self, interface: InterfaceName) -> str | None:
         """Get MAC address of interface"""
         try:
-            result = subprocess.run(
-                ["ifconfig", interface],
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=5
-            )
+            result = subprocess.run(["ifconfig", interface], capture_output=True, text=True, check=True, timeout=5)
 
             for line in result.stdout.splitlines():
                 if "ether" in line:
@@ -377,13 +361,7 @@ class MacOSUSBNICDetector(USBNICDetector):
     def get_interface_status(self, interface: InterfaceName) -> bool:
         """Check if interface has active carrier/link"""
         try:
-            result = subprocess.run(
-                ["ifconfig", interface],
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=5
-            )
+            result = subprocess.run(["ifconfig", interface], capture_output=True, text=True, check=True, timeout=5)
 
             for line in result.stdout.splitlines():
                 if "status:" in line.lower():
@@ -418,12 +396,7 @@ class MacOSUSBNICDetector(USBNICDetector):
                 except Exception as e:
                     logger.warning(f"Failed to remove IP from {iface.name}: {e}")
 
-    def configure_interface(
-        self,
-        interface: InterfaceName,
-        ip: IPAddress,
-        netmask: str
-    ) -> bool:
+    def configure_interface(self, interface: InterfaceName, ip: IPAddress, netmask: str) -> bool:
         """Configure IP address on interface using ifconfig"""
         # Validate interface is safe to configure
         self.validate_interface_for_config(interface)
@@ -466,13 +439,7 @@ class MacOSUSBNICDetector(USBNICDetector):
         """Add static route using route command"""
         try:
             # Check if route already exists
-            result = subprocess.run(
-                ["netstat", "-rn"],
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=10
-            )
+            result = subprocess.run(["netstat", "-rn"], capture_output=True, text=True, check=True, timeout=10)
 
             if network in result.stdout and gateway in result.stdout:
                 logger.info(f"Route to {network} via {gateway} already exists")
@@ -492,12 +459,7 @@ class MacOSUSBNICDetector(USBNICDetector):
             logger.error(f"[FAIL] Failed to add route: {e}")
             return False
 
-    def test_connectivity(
-        self,
-        target_ip: IPAddress,
-        count: int = 3,
-        timeout: int = 2
-    ) -> bool:
+    def test_connectivity(self, target_ip: IPAddress, count: int = 3, timeout: int = 2) -> bool:
         """Test ICMP connectivity to target"""
         try:
             logger.info(f"Testing connectivity to {target_ip}...")
@@ -505,7 +467,7 @@ class MacOSUSBNICDetector(USBNICDetector):
                 ["ping", "-c", str(count), "-W", str(timeout), target_ip],
                 capture_output=True,
                 text=True,
-                timeout=count * timeout + 5
+                timeout=count * timeout + 5,
             )
 
             if result.returncode == 0:
@@ -525,15 +487,9 @@ class MacOSUSBNICDetector(USBNICDetector):
 
         This is intentionally best-effort and should never raise on operator hosts.
         """
-        usb_interfaces_with_ip = [
-            iface.name
-            for iface in self.detect_interfaces()
-            if iface.is_usb and iface.current_ip
-        ]
+        usb_interfaces_with_ip = [iface.name for iface in self.detect_interfaces() if iface.is_usb and iface.current_ip]
         nwi_interfaces = self._get_nwi_interfaces()
-        missing_from_nwi = [
-            interface for interface in usb_interfaces_with_ip if interface not in nwi_interfaces
-        ]
+        missing_from_nwi = [interface for interface in usb_interfaces_with_ip if interface not in nwi_interfaces]
 
         return BastionDiagnostics(
             usb_interfaces_with_ip=usb_interfaces_with_ip,

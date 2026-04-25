@@ -14,18 +14,12 @@ Profile support allows named configurations for different environments.
 
 from __future__ import annotations
 
-import os
 import logging
-from pathlib import Path
+import os
+import tomllib
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
-
-# Python 3.11+ has tomllib in stdlib
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib  # type: ignore[import-not-found]
-
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +68,7 @@ def get_config_paths() -> list[Path]:
 @dataclass
 class NetworkProfile:
     """A named network configuration profile."""
+
     device_ip: str
     laptop_ip: str
     netmask: str = "255.255.255.0"
@@ -105,6 +100,7 @@ class Settings:
     Attributes represent the final resolved values after merging
     all config files, environment variables, and CLI arguments.
     """
+
     # Network defaults (RFC 5737 documentation IPs as fallback)
     device_ip: str = "192.0.2.1"
     laptop_ip: str = "192.0.2.100"
@@ -291,7 +287,7 @@ def ensure_config_dir() -> Path:
 
 def get_default_config_content() -> str:
     """Return default config file content as a string."""
-    return '''# Darwin Management NIC Configurator - User Configuration
+    return """# Darwin Management NIC Configurator - User Configuration
 # Place this file at: ~/.config/darwin-nic/config.toml
 # Or use a local override: ./.darwin-nic.toml
 
@@ -328,7 +324,7 @@ description = "Secondary management target"
 # laptop_ip = "10.200.0.100"
 # mgmt_network = "10.200.0.0/24"
 # device_name = "DC Core Switch"
-'''
+"""
 
 
 def init_config(force: bool = False) -> Path | None:

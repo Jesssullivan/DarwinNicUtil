@@ -96,6 +96,8 @@ Shows:
 - WiFi status
 - USB NIC status
 - Service order
+- Bastion/OOB diagnostics on macOS when relevant, including `scutil --nwi`,
+  Tailscale system-extension state, and recent NECP drop hints
 
 ## darwin-nic dashboard
 
@@ -206,8 +208,8 @@ preserve_wifi = true
 device_ip = "192.168.88.1"
 laptop_ip = "192.168.88.100"
 mgmt_network = "192.168.88.0/24"
-device_name = "CRS309 Bastion"
-description = "Home lab network"
+device_name = "Lab Management Device"
+description = "Home lab management network"
 
 [profiles.datacenter]
 device_ip = "10.200.0.1"

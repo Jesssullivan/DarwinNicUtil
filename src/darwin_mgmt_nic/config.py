@@ -5,7 +5,6 @@ Python 3.14+ with modern type system
 
 import ipaddress
 from dataclasses import dataclass
-from typing import Optional
 from enum import Enum
 
 # Python 3.14 type aliases
@@ -16,6 +15,7 @@ type MACAddress = str
 
 class OSType(Enum):
     """Supported operating systems"""
+
     MACOS = "darwin"
     LINUX = "linux"
     WINDOWS = "win32"
@@ -36,6 +36,7 @@ class NetworkConfig:
     Raises:
         ValueError: If IP addresses or networks are invalid
     """
+
     device_ip: IPAddress
     laptop_ip: IPAddress
     netmask: str
@@ -78,15 +79,16 @@ class NetworkInterface:
         mac_address: MAC address
         vendor: USB vendor if detected
     """
+
     name: InterfaceName
     hardware_port: str
     is_usb: bool
     is_wifi: bool = False
     is_active: bool = False
     is_protected: bool = False
-    current_ip: Optional[IPAddress] = None
-    mac_address: Optional[MACAddress] = None
-    vendor: Optional[str] = None
+    current_ip: IPAddress | None = None
+    mac_address: MACAddress | None = None
+    vendor: str | None = None
 
     def __str__(self) -> str:
         """Human-readable interface representation with status icons"""

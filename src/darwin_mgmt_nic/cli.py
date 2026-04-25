@@ -2,29 +2,26 @@
 CLI interface for USB NIC configurator
 """
 
-import sys
-import logging
 import argparse
+import logging
 import subprocess
+import sys
 import time
+
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich import box
 
 from .config import NetworkConfig
 from .configurator import USBNICConfigurator
 from .factory import USBNICDetectorFactory
-from .settings import load_settings, init_config, get_config_paths, Settings
+from .settings import Settings, get_config_paths, init_config, load_settings
 
 
 def setup_logging(verbose: bool = False) -> None:
     """Configure logging based on verbosity"""
     level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(
-        level=level,
-        format='[%(asctime)s] %(levelname)s: %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
+    logging.basicConfig(level=level, format="[%(asctime)s] %(levelname)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
 
 def create_parser(settings: Settings) -> argparse.ArgumentParser:
@@ -48,103 +45,69 @@ Examples:
 
   # Initialize config file
   %(prog)s --init-config
-        """
+        """,
     )
 
     # Config management
-    parser.add_argument(
-        "--profile",
-        metavar="NAME",
-        help="Use named profile from config file"
-    )
+    parser.add_argument("--profile", metavar="NAME", help="Use named profile from config file")
 
-    parser.add_argument(
-        "--show-config",
-        action="store_true",
-        help="Show current configuration and available profiles"
-    )
+    parser.add_argument("--show-config", action="store_true", help="Show current configuration and available profiles")
 
-    parser.add_argument(
-        "--init-config",
-        action="store_true",
-        help="Initialize user config file with defaults"
-    )
+    parser.add_argument("--init-config", action="store_true", help="Initialize user config file with defaults")
 
-    parser.add_argument(
-        "--list-profiles",
-        action="store_true",
-        help="List available profiles"
-    )
+    parser.add_argument("--list-profiles", action="store_true", help="List available profiles")
 
     # Network configuration (defaults from settings)
     parser.add_argument(
         "--dry-run",
         action="store_true",
         default=settings.dry_run,
-        help="Show what would be done without making changes"
+        help="Show what would be done without making changes",
     )
 
     parser.add_argument(
-        "--device-ip",
-        default=settings.device_ip,
-        help=f"Device IP address (default: {settings.device_ip})"
+        "--device-ip", default=settings.device_ip, help=f"Device IP address (default: {settings.device_ip})"
     )
 
     parser.add_argument(
-        "--laptop-ip",
-        default=settings.laptop_ip,
-        help=f"Laptop IP address (default: {settings.laptop_ip})"
+        "--laptop-ip", default=settings.laptop_ip, help=f"Laptop IP address (default: {settings.laptop_ip})"
     )
 
-    parser.add_argument(
-        "--netmask",
-        default=settings.netmask,
-        help=f"Network mask (default: {settings.netmask})"
-    )
+    parser.add_argument("--netmask", default=settings.netmask, help=f"Network mask (default: {settings.netmask})")
 
     parser.add_argument(
         "--device-name",
         default=settings.device_name,
-        help=f"Human-readable device name (default: {settings.device_name})"
+        help=f"Human-readable device name (default: {settings.device_name})",
     )
 
     parser.add_argument(
         "--mgmt-network",
         default=settings.mgmt_network,
-        help=f"Management network for routing (default: {settings.mgmt_network})"
+        help=f"Management network for routing (default: {settings.mgmt_network})",
     )
 
-    parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Enable verbose logging"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
 
     parser.add_argument(
         "--preserve-wifi",
         action="store_true",
         default=settings.preserve_wifi,
-        help="Preserve WiFi connectivity during USB NIC configuration"
+        help="Preserve WiFi connectivity during USB NIC configuration",
     )
 
     parser.add_argument(
         "--show-dashboard",
         action="store_true",
         default=settings.show_dashboard,
-        help="Display real-time network monitoring dashboard"
+        help="Display real-time network monitoring dashboard",
     )
 
     parser.add_argument(
-        "--fix-vpn-issues",
-        action="store_true",
-        help="Fix network priority and DNS issues caused by VPN connections"
+        "--fix-vpn-issues", action="store_true", help="Fix network priority and DNS issues caused by VPN connections"
     )
 
-    parser.add_argument(
-        "--version",
-        action="version",
-        version="USB NIC Configurator 2.0.0"
-    )
+    parser.add_argument("--version", action="version", version="USB NIC Configurator 2.0.0")
 
     return parser
 
@@ -201,11 +164,7 @@ def show_config(settings: Settings) -> None:
 
         for name, profile in settings.profiles.items():
             default_marker = " [yellow]*[/yellow]" if name == settings.default_profile else ""
-            profiles_table.add_row(
-                f"{name}{default_marker}",
-                profile.device_ip,
-                profile.device_name
-            )
+            profiles_table.add_row(f"{name}{default_marker}", profile.device_ip, profile.device_name)
 
         console.print(profiles_table)
         console.print("[dim]* = default profile[/dim]")
@@ -245,6 +204,7 @@ def main() -> int:
     # Load settings first (before parsing args, so defaults come from config)
     # We need to do a preliminary parse just for --profile
     import sys
+
     profile_arg = None
     if "--profile" in sys.argv:
         try:
@@ -316,15 +276,12 @@ def main() -> int:
             laptop_ip=args.laptop_ip,
             netmask=args.netmask,
             mgmt_network=args.mgmt_network,
-            device_name=args.device_name
+            device_name=args.device_name,
         )
 
         # Create and run configurator
         configurator = USBNICConfigurator(
-            config,
-            dry_run=args.dry_run,
-            preserve_wifi=args.preserve_wifi,
-            show_dashboard=args.show_dashboard
+            config, dry_run=args.dry_run, preserve_wifi=args.preserve_wifi, show_dashboard=args.show_dashboard
         )
         success = configurator.configure()
 
@@ -345,22 +302,21 @@ def handle_vpn_repair() -> int:
     """Handle VPN network repair functionality"""
     console = Console()
     logger = logging.getLogger(__name__)
-    
+
     try:
         # Import here to avoid circular imports
-        from .network_manager import ServiceOrderManager, WiFiMonitor
-        
+        from .network_manager import ServiceOrderManager
+
         console.print("[bold cyan]VPN Network Repair[/bold cyan]")
         console.print("Fixing network priority and DNS issues caused by VPN...\n")
-        
+
         # Initialize managers
         service_manager = ServiceOrderManager()
-        wifi_monitor = WiFiMonitor()
-        
+
         # Create backup
         logger.info("Creating backup of current network settings...")
         service_manager.backup_service_order()
-        
+
         # Fix WiFi priority
         logger.info("Restoring WiFi priority...")
         if service_manager.set_wifi_priority():
@@ -368,13 +324,17 @@ def handle_vpn_repair() -> int:
         else:
             console.print("[red][FAIL] Failed to restore WiFi priority[/red]")
             return 1
-        
+
         # Fix DNS
         logger.info("Fixing DNS configuration...")
         try:
             # Set reliable DNS servers
-            subprocess.run(["networksetup", "-setdnsservers", "Wi-Fi", "8.8.8.8", "8.8.4.4", "1.1.1.1"],
-                         check=True, capture_output=True, timeout=30)
+            subprocess.run(
+                ["networksetup", "-setdnsservers", "Wi-Fi", "8.8.8.8", "8.8.4.4", "1.1.1.1"],
+                check=True,
+                capture_output=True,
+                timeout=30,
+            )
             console.print("[green][OK] DNS servers updated[/green]")
 
             # Flush DNS cache
@@ -385,24 +345,24 @@ def handle_vpn_repair() -> int:
         except subprocess.CalledProcessError as e:
             console.print(f"[red][FAIL] Failed to fix DNS: {e}[/red]")
             return 1
-        
+
         # Wait for network to stabilize
         console.print("[yellow]Waiting for network to stabilize...[/yellow]")
         time.sleep(3)
-        
+
         # Verify connectivity
         logger.info("Verifying network connectivity...")
         try:
             # Test DNS resolution
-            result = subprocess.run(["nslookup", "google.com"], 
-                                  capture_output=True, text=True, timeout=10)
+            result = subprocess.run(["nslookup", "google.com"], capture_output=True, text=True, timeout=10)
             dns_working = result.returncode == 0
-            
+
             # Test internet connectivity
-            result = subprocess.run(["ping", "-c", "1", "-t", "5", "8.8.8.8"], 
-                                  capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                ["ping", "-c", "1", "-t", "5", "8.8.8.8"], capture_output=True, text=True, timeout=10
+            )
             internet_working = result.returncode == 0
-            
+
             if dns_working and internet_working:
                 console.print("[bold green][OK] Network repair completed successfully![/bold green]")
                 console.print("\n[cyan]What was fixed:[/cyan]")
@@ -416,7 +376,7 @@ def handle_vpn_repair() -> int:
                 console.print(f"DNS: {'Working' if dns_working else 'Broken'}")
                 console.print(f"Internet: {'Working' if internet_working else 'Broken'}")
                 return 1
-                
+
         except subprocess.TimeoutExpired:
             console.print("[red][FAIL] Network verification timed out[/red]")
             return 1

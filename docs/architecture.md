@@ -19,7 +19,6 @@ graph TB
     subgraph Platform["Platform Detectors"]
         MACOS[MacOSUSBNICDetector]
         LINUX[LinuxUSBNICDetector]
-        WIN[WindowsUSBNICDetector]
     end
 
     subgraph Network["Network Management"]
@@ -33,7 +32,6 @@ graph TB
     CONF --> FACTORY
     FACTORY --> MACOS
     FACTORY --> LINUX
-    FACTORY --> WIN
     CONF --> SVC
     CONF --> WIFI
     DASH --> SVC
@@ -44,16 +42,18 @@ graph TB
 
 ```
 src/darwin_mgmt_nic/
-├── unified_entry.py    # Package entry point
-├── cli.py              # CLI argument parsing
-├── guided_setup.py     # Rich TUI wizard
+├── app.py              # Installed console-script entry point and subcommands
+├── cli.py              # Configure/status backend used by app.py and legacy runner
+├── guided_setup.py     # Rich guided setup wizard
+├── settings.py         # TOML/env profile loading
 ├── config.py           # Configuration models
 ├── configurator.py     # Main orchestration
 ├── factory.py          # Platform factory
 ├── detectors.py        # Abstract base class
 ├── macos.py            # macOS implementation
 ├── linux.py            # Linux placeholder
-└── network_manager.py  # Network utilities
+├── network_manager.py  # WiFi/service-order/routing utilities
+└── tui.py              # Terminal UI primitives
 ```
 
 ## Data Flow
@@ -210,6 +210,5 @@ classDiagram
 
 | Platform | Status | Detection Method |
 |----------|--------|------------------|
-| macOS | Complete | `networksetup -listallhardwareports` |
-| Linux | Planned | `ip link`, `nmcli` |
-| Windows | Planned | `netsh`, PowerShell |
+| macOS | Primary | `networksetup`, `ifconfig`, `route`, `scutil`, unified logs |
+| Linux | Experimental placeholder | `ip link`, `ping` |

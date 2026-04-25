@@ -1,0 +1,13 @@
+# gitleaks configuration for DarwinNicUtil
+# Secret scanning runs in CI and can be run locally with:
+#   gitleaks detect --source . --config .gitleaks.toml --verbose
+
+title = "DarwinNicUtil gitleaks config"
+
+[allowlist]
+  description = "Repository-specific false positives"
+  regexTarget = "line"
+  regexes = [
+    # Nix store paths and hashes are content addresses, not credentials.
+    '''/nix/store/[a-z0-9]{32}-''',
+  ]

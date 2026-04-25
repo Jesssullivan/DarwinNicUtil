@@ -134,9 +134,9 @@ in
           homelab = {
             deviceIp = "192.168.88.1";
             laptopIp = "192.168.88.100";
-            mgmtNetwork = "192.168.10.0/24";
-            deviceName = "CRS309 Bastion";
-            deviceType = "mikrotik";
+            mgmtNetwork = "192.168.88.0/24";
+            deviceName = "Lab Management Device";
+            deviceType = "network";
           };
         }
       '';

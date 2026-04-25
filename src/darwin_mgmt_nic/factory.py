@@ -2,14 +2,13 @@
 Factory pattern for creating platform-specific USB NIC detectors
 """
 
-import platform
 import logging
-from typing import Optional
+import platform
 
 from .config import OSType
 from .detectors import USBNICDetector
-from .macos import MacOSUSBNICDetector
 from .linux import LinuxUSBNICDetector
+from .macos import MacOSUSBNICDetector
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ class USBNICDetectorFactory:
     """
 
     @staticmethod
-    def create(os_type: Optional[OSType] = None, tui_mode: bool = False) -> USBNICDetector:
+    def create(os_type: OSType | None = None, tui_mode: bool = False) -> USBNICDetector:
         """
         Create appropriate detector for specified or current platform.
 
@@ -61,10 +60,7 @@ class USBNICDetectorFactory:
                 return LinuxUSBNICDetector()
 
             case OSType.WINDOWS:
-                raise NotImplementedError(
-                    "Windows support not yet implemented. "
-                    "Contributions welcome!"
-                )
+                raise NotImplementedError("Windows support not yet implemented. " "Contributions welcome!")
 
             case _:
                 raise NotImplementedError(f"OS type {os_type} not supported")
@@ -89,13 +85,10 @@ class USBNICDetectorFactory:
         elif system in ("win32", "windows"):
             return OSType.WINDOWS
         else:
-            raise NotImplementedError(
-                f"Platform '{system}' not supported. "
-                f"Supported platforms: macOS, Linux"
-            )
+            raise NotImplementedError(f"Platform '{system}' not supported. " f"Supported platforms: macOS, Linux")
 
     @staticmethod
-    def is_supported(os_type: Optional[OSType] = None) -> bool:
+    def is_supported(os_type: OSType | None = None) -> bool:
         """
         Check if platform is supported.
 

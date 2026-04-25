@@ -51,9 +51,12 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Quick Start: quickstart.md
+  - Bastion / OOB: bastion.md
+  - Artifacts: artifacts.md
   - Architecture: architecture.md
   - CLI Reference: cli.md
   - Development: development.md
+  - Release Sprint Plan: superpowers/release-sprint-plan.md
 
 extra:
   social:

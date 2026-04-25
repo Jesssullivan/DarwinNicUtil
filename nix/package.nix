@@ -6,7 +6,7 @@
 
 python3Packages.buildPythonApplication rec {
   pname = "darwin-nic";
-  version = "2.0.0";
+  version = "2.1.0";
   pyproject = true;
 
   src = lib.cleanSource ./..;
@@ -49,7 +49,7 @@ python3Packages.buildPythonApplication rec {
 
   meta = {
     description = "USB network interface configurator for management access to network devices";
-    homepage = "https://gitlab.com/tinyland/projects/darwin-mgmt-nic-configurator";
+    homepage = "https://github.com/Jesssullivan/DarwinNicUtil";
     license = lib.licenses.zlib;
     maintainers = [ ];
     mainProgram = "darwin-nic";

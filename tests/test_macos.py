@@ -2,8 +2,10 @@
 Tests for macOS-specific implementation
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from darwin_mgmt_nic.config import NetworkInterface
 from darwin_mgmt_nic.macos import MacOSUSBNICDetector
 
@@ -59,65 +61,50 @@ class TestMacOSUSBNICDetector:
         vendor = detector._extract_vendor("Unknown Network Device")
         assert vendor is None
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_get_interface_ip(self, mock_run):
         """Test getting interface IP address"""
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="inet 192.0.2.100 netmask 0xffffff00"
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="inet 192.0.2.100 netmask 0xffffff00")
 
         detector = MacOSUSBNICDetector()
         ip = detector._get_interface_ip("en7")
         assert ip == "192.0.2.100"
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_get_interface_ip_no_ip(self, mock_run):
         """Test interface with no IP"""
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="ether 11:22:33:44:55:66\nstatus: active"
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="ether 11:22:33:44:55:66\nstatus: active")
 
         detector = MacOSUSBNICDetector()
         ip = detector._get_interface_ip("en7")
         assert ip is None
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_get_mac_address(self, mock_run):
         """Test getting MAC address"""
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="ether 11:22:33:44:55:66"
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="ether 11:22:33:44:55:66")
 
         detector = MacOSUSBNICDetector()
         mac = detector._get_mac_address("en7")
         assert mac == "11:22:33:44:55:66"
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_get_interface_status_active(self, mock_run):
         """Test checking active interface"""
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="status: active"
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="status: active")
 
         detector = MacOSUSBNICDetector()
         assert detector.get_interface_status("en7")
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_get_interface_status_inactive(self, mock_run):
         """Test checking inactive interface"""
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="status: inactive"
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="status: inactive")
 
         detector = MacOSUSBNICDetector()
         assert not detector.get_interface_status("en7")
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_configure_interface_protected(self, mock_run):
         """Test configuring protected interface raises error"""
         detector = MacOSUSBNICDetector()
@@ -181,6 +168,7 @@ class TestMacOSUSBNICDetector:
     @patch("subprocess.run")
     def test_get_bastion_diagnostics_detects_nwi_necp_and_tailscale(self, mock_run):
         """Bastion diagnostics should surface the same host-side symptoms we saw on pzm."""
+
         def run_side_effect(cmd, *args, **kwargs):
             if cmd[:2] == ["scutil", "--nwi"]:
                 return MagicMock(
@@ -239,19 +227,16 @@ class TestMacOSUSBNICDetector:
         assert diagnostics.tailscale_extension_active is True
         assert diagnostics.recent_necp_drop is True
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_add_static_route_already_exists(self, mock_run):
         """Test adding route that already exists"""
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="198.51.100.0/24        192.0.2.1       UGSc"
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="198.51.100.0/24        192.0.2.1       UGSc")
 
         detector = MacOSUSBNICDetector()
         result = detector.add_static_route("198.51.100.0/24", "192.0.2.1")
         assert result is True
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_test_connectivity_success(self, mock_run):
         """Test successful connectivity test"""
         mock_run.return_value = MagicMock(returncode=0)
@@ -259,7 +244,7 @@ class TestMacOSUSBNICDetector:
         detector = MacOSUSBNICDetector()
         assert detector.test_connectivity("192.0.2.1")
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_test_connectivity_failure(self, mock_run):
         """Test failed connectivity test"""
         mock_run.return_value = MagicMock(returncode=1)

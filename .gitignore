@@ -33,6 +33,7 @@ env/
 .coverage
 .coverage.*
 htmlcov/
+site/
 test-report.html
 .tox/
 .nox/
