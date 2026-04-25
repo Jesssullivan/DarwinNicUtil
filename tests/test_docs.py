@@ -120,7 +120,8 @@ def test_artifacts_docs_match_current_release_policy():
     assert "Nix packages" in artifacts
     assert "Standalone binary" in artifacts
     assert "not validated yet" in artifacts
-    assert "Homebrew | Not shipped" in artifacts
+    assert "Homebrew | Deferred" in artifacts
+    assert "no active DarwinNicUtil tap/formula path" in artifacts
     assert "PyPI publishing and standalone binary distribution remain tracked release" in readme
 
 
