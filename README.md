@@ -23,8 +23,8 @@ path intact.
 uv tool install darwin-mgmt-nic-configurator
 darwin-nic status
 
-# Run the stable v2.1.0 release from FlakeHub
-nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" -- status
+# Run the stable v2.1.1 release from FlakeHub
+nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" -- status
 
 # Or run directly from GitHub
 nix run github:Jesssullivan/DarwinNicUtil -- status
@@ -59,7 +59,7 @@ darwin-nic configure --profile homelab --preserve-wifi
 uv tool install darwin-mgmt-nic-configurator
 
 # Nix profile from FlakeHub
-nix profile install "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0"
+nix profile install "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1"
 
 # Nix profile from GitHub
 nix profile install github:Jesssullivan/DarwinNicUtil
@@ -167,7 +167,7 @@ Current release artifacts are:
 
 - PyPI distribution for `darwin-mgmt-nic-configurator`;
 - GitHub Release wheel and source distribution files;
-- Nix flake package outputs, including FlakeHub `v2.1.0`;
+- Nix flake package outputs, including FlakeHub `v2.1.1`;
 - MkDocs site artifacts from the docs workflow.
 
 GitHub Release, PyPI, FlakeHub, and docs workflows are present for tag-based

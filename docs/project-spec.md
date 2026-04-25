@@ -93,13 +93,13 @@ Current validated surfaces:
 - PyPI distribution for `darwin-mgmt-nic-configurator`.
 - GitHub Release with wheel and source distribution artifacts.
 - Nix flake package outputs.
-- FlakeHub release `v2.1.0` and rolling channel.
+- FlakeHub release `v2.1.1` and rolling channel.
 - MkDocs site published by GitHub Pages.
 
 Staged or deferred surfaces:
 - Standalone binaries are local smoke-test artifacts only until CI builds,
   tests, checksums, and signing/notarization policy exist.
-- Homebrew is deferred until PyPI or standalone binary artifacts are proven.
+- Homebrew remains deferred until there is an active tap maintainer/consumer path.
 - Bazel/Bzlmod is not a primary install path unless a real downstream consumer
   appears.
 

@@ -22,7 +22,7 @@ For the public release shape and productionization summary, see the
 
 ```bash
 # Stable release from FlakeHub
-nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" -- status
+nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" -- status
 
 # Direct GitHub flake reference
 nix run github:Jesssullivan/DarwinNicUtil -- status
