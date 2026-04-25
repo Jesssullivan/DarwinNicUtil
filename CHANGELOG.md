@@ -10,6 +10,7 @@ All notable changes to DarwinNicUtil are recorded here.
   distribution uploads.
 - Track post-v2.1 distribution follow-ups for PyPI, standalone binaries,
   Homebrew, FlakeHub, and Bazel/BCR without advertising unproven install paths.
+- Mark Homebrew as deferred until a supported PyPI or standalone artifact exists.
 
 ## 2.1.0 - 2026-04-25
 
