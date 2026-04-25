@@ -4,7 +4,8 @@ All notable changes to DarwinNicUtil are recorded here.
 
 ## Unreleased
 
-- No changes yet.
+- Restrict future release workflow uploads to wheel and source distribution
+  artifacts only.
 
 ## 2.1.0 - 2026-04-25
 

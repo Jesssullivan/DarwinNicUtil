@@ -113,6 +113,7 @@ git tag -a v2.1.0 -m "Release v2.1.0"
 git push origin v2.1.0
 ```
 
-The release workflow attaches `dist/*` to the GitHub Release. PyPI trusted
-publishing and standalone binary distribution are follow-up release tasks unless
-they are explicitly enabled before the tag.
+The release workflow attaches only wheel and source distribution files from
+`dist/` to the GitHub Release. PyPI trusted publishing and standalone binary
+distribution are follow-up release tasks unless they are explicitly enabled
+before the tag.
