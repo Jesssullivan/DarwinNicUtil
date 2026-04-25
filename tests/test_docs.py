@@ -20,6 +20,7 @@ def test_operator_docs_do_not_point_at_retired_gitlab_repository():
         REPO_ROOT / "docs" / "cli.md",
         REPO_ROOT / "docs" / "development.md",
         REPO_ROOT / "docs" / "index.md",
+        REPO_ROOT / "docs" / "project-spec.md",
         REPO_ROOT / "docs" / "quickstart.md",
         REPO_ROOT / "docs" / "llms.txt",
         REPO_ROOT / "mkdocs.yml",
@@ -88,6 +89,7 @@ def test_public_docs_stay_generic_and_release_accurate():
         REPO_ROOT / "docs" / "cli.md",
         REPO_ROOT / "docs" / "development.md",
         REPO_ROOT / "docs" / "index.md",
+        REPO_ROOT / "docs" / "project-spec.md",
         REPO_ROOT / "docs" / "quickstart.md",
         REPO_ROOT / "docs" / "superpowers" / "release-sprint-plan.md",
         REPO_ROOT / "examples" / "config.toml",
@@ -176,6 +178,33 @@ def test_coverage_gate_is_ratchet_to_fifty_percent():
     assert "current coverage gate is 50 percent" in development
     assert "configured 50 percent gate" in release_plan
     assert "configured 40 percent gate" not in release_plan
+
+
+def test_project_spec_is_public_and_generic():
+    readme = (REPO_ROOT / "README.md").read_text()
+    index = (REPO_ROOT / "docs" / "index.md").read_text()
+    mkdocs = (REPO_ROOT / "mkdocs.yml").read_text()
+    llms = (REPO_ROOT / "docs" / "llms.txt").read_text()
+    spec = (REPO_ROOT / "docs" / "project-spec.md").read_text()
+
+    assert "[`docs/project-spec.md`](docs/project-spec.md)" in readme
+    assert "[project spec](project-spec.md)" in index
+    assert "Project Spec: project-spec.md" in mkdocs
+    assert "docs/project-spec.md" in llms
+    assert "Productionization Results" in spec
+    assert "PyPI trusted publishing is staged" in spec
+    assert "Coverage gate ratcheted to 50 percent" in spec
+    assert "Consumers own their own device names, secrets, and recovery policy" in spec
+
+    forbidden = [
+        "crs309-main",
+        "vault_mikrotik_password",
+        "sops-nix/secrets",
+        "100.111.",
+        "100.124.",
+    ]
+    for phrase in forbidden:
+        assert phrase not in spec
 
 
 def test_root_entrypoint_uses_package_app_version():

@@ -62,6 +62,8 @@ uv tool install .
 ```
 
 Home Manager and System Manager modules are available under `nix/modules/`.
+For the release shape and productionization summary, see
+[`docs/project-spec.md`](docs/project-spec.md).
 
 ## Commands
 

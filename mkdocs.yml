@@ -53,6 +53,7 @@ nav:
   - Quick Start: quickstart.md
   - Bastion / OOB: bastion.md
   - Artifacts: artifacts.md
+  - Project Spec: project-spec.md
   - Architecture: architecture.md
   - CLI Reference: cli.md
   - Development: development.md
