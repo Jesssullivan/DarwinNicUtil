@@ -9,7 +9,8 @@ Primary docs:
 - `docs/quickstart.md`: current Nix, source, and uv tool startup flows.
 - `docs/cli.md`: command and option reference.
 - `docs/bastion.md`: generic bastion/OOB operator flow and boundaries.
-- `docs/artifacts.md`: current release artifact policy.
+- `docs/artifacts.md`: current release artifact policy, including GitHub
+  Releases and FlakeHub.
 - `docs/architecture.md`: module structure and safety architecture.
 - `docs/superpowers/release-sprint-plan.md`: release-readiness sprint plan.
 

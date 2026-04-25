@@ -7,8 +7,10 @@ Get a USB management NIC configured without letting it take over normal Wi-Fi or
 === "Nix"
 
     ```bash
-    nix run github:Jesssullivan/DarwinNicUtil -- setup
+    # Stable release
+    nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" -- setup
 
+    # Direct GitHub flake reference
     nix run github:Jesssullivan/DarwinNicUtil -- configure \
       --device-ip 192.168.88.1 \
       --laptop-ip 192.168.88.100 \
