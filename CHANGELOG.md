@@ -8,6 +8,8 @@ All notable changes to DarwinNicUtil are recorded here.
   artifacts only.
 - Clarify release artifact docs so they describe only wheel and source
   distribution uploads.
+- Track post-v2.1 distribution follow-ups for PyPI, standalone binaries,
+  Homebrew, FlakeHub, and Bazel/BCR without advertising unproven install paths.
 
 ## 2.1.0 - 2026-04-25
 
