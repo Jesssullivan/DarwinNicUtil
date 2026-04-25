@@ -123,12 +123,13 @@ def test_artifacts_docs_match_current_release_policy():
     assert "not validated yet" in artifacts
     assert "Homebrew | Deferred" in artifacts
     assert "no active DarwinNicUtil tap/formula path" in artifacts
-    assert "FlakeHub | Publish workflow is staged" in artifacts
-    assert "Do not add FlakeHub" in artifacts
-    assert "install instructions to the README" in artifacts
+    assert "FlakeHub releases" in artifacts
+    assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" in artifacts
+    assert "current public" in artifacts
+    assert "FlakeHub releases are `v2.1.0`" in artifacts
     assert "nix run github:Jesssullivan/DarwinNicUtil -- status" in artifacts
-    assert "flakehub.com/f/" not in readme.lower()
-    assert "PyPI publishing and standalone binary distribution remain tracked release" in readme
+    assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" in readme
+    assert "PyPI publishing and standalone binary distribution remain tracked" in readme
 
     if flakehub_workflow_path.exists():
         flakehub_workflow = flakehub_workflow_path.read_text()

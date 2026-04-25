@@ -18,6 +18,10 @@ belong in downstream operator repositories.
 ## Quick Start
 
 ```bash
+# Stable release from FlakeHub
+nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" -- status
+
+# Direct GitHub flake reference
 nix run github:Jesssullivan/DarwinNicUtil -- status
 nix run github:Jesssullivan/DarwinNicUtil -- configure \
   --device-ip 192.168.88.1 \
@@ -65,5 +69,5 @@ flowchart LR
 ## Artifacts
 
 The release path currently supports Python wheel/source distributions, Nix
-packages, and MkDocs site artifacts. Standalone binary and PyPI publication are
-tracked follow-ups rather than established release outputs.
+packages, FlakeHub releases, and MkDocs site artifacts. Standalone binary and
+PyPI publication are tracked follow-ups rather than established release outputs.

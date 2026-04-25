@@ -1,7 +1,7 @@
 # Artifacts
 
-This project currently treats wheel/source distributions, Nix packages, and the
-MkDocs site as release artifacts.
+This project currently treats wheel/source distributions, Nix packages,
+FlakeHub releases, and the MkDocs site as release artifacts.
 
 ## Python Packages
 
@@ -45,16 +45,22 @@ nix build .#net-utils -L
 Downstream Home Manager users should consume the flake input and install
 `packages.${system}.darwin-nic`.
 
-The supported public flake reference remains:
+The stable FlakeHub release reference is:
+
+```bash
+nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" -- status
+```
+
+The direct GitHub flake reference remains supported:
 
 ```bash
 nix run github:Jesssullivan/DarwinNicUtil -- status
 ```
 
-FlakeHub publication is staged through the `Publish to FlakeHub` GitHub Actions
+FlakeHub publication runs through the `Publish to FlakeHub` GitHub Actions
 workflow. Tagged releases publish from `v*.*.*` tags, and maintainers can run a
-manual rolling validation from the workflow dispatch form. Do not add FlakeHub
-install instructions to the README until a public FlakeHub release has completed.
+manual rolling validation from the workflow dispatch form. The current public
+FlakeHub releases are `v2.1.0` and the rolling `*` channel.
 
 ## Documentation Site
 
@@ -80,11 +86,10 @@ GitHub Release.
 | PyPI | Planned through trusted publishing; tracked in [GitHub #11](https://github.com/Jesssullivan/DarwinNicUtil/issues/11) |
 | Standalone binary | PyInstaller spec exists, but binary releases are not validated yet; tracked in [GitHub #9](https://github.com/Jesssullivan/DarwinNicUtil/issues/9) |
 | Homebrew | Deferred; there is no active DarwinNicUtil tap/formula path until PyPI or standalone artifacts are proven, with the decision recorded in [GitHub #10](https://github.com/Jesssullivan/DarwinNicUtil/issues/10) |
-| FlakeHub | Publish workflow is staged for tag/manual validation, but FlakeHub is not advertised until a public release is proven; tracked in [GitHub #16](https://github.com/Jesssullivan/DarwinNicUtil/issues/16) |
 | Bazel / BCR | Not a primary install path; evaluate only if a real downstream Bazel/Bzlmod consumer needs it, tracked in [GitHub #17](https://github.com/Jesssullivan/DarwinNicUtil/issues/17) |
 | Container image | Not applicable for the CLI today |
 
-FlakeHub and Bazel/BCR work should stay aligned with the broader Tinyland
-distribution substrate. Homebrew should be reconsidered only after a supported
-PyPI or standalone artifact exists. This repo should only document public,
-validated install paths.
+Bazel/BCR work should stay aligned with the broader Tinyland distribution
+substrate. Homebrew should be reconsidered only after a supported PyPI or
+standalone artifact exists. This repo should only document public, validated
+install paths.

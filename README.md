@@ -11,14 +11,18 @@ path intact.
 
 - macOS is the primary supported platform.
 - Linux support is experimental and currently limited.
-- Release artifacts are source distributions, wheels, and Nix packages.
+- Release artifacts are source distributions, wheels, Nix packages, and
+  FlakeHub releases.
 - The PyInstaller spec is retained for manual builds, but standalone binaries
   are not the primary release artifact yet.
 
 ## Quick Start
 
 ```bash
-# Run from Nix without cloning
+# Run the stable v2.1.0 release from FlakeHub
+nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" -- status
+
+# Or run directly from GitHub
 nix run github:Jesssullivan/DarwinNicUtil -- status
 nix run github:Jesssullivan/DarwinNicUtil -- configure \
   --device-ip <device-ipv4> \
@@ -47,7 +51,10 @@ darwin-nic configure --profile homelab --preserve-wifi
 ## Install
 
 ```bash
-# Nix profile
+# Nix profile from FlakeHub
+nix profile install "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0"
+
+# Nix profile from GitHub
 nix profile install github:Jesssullivan/DarwinNicUtil
 
 # uv from source
@@ -150,9 +157,9 @@ Run `just` with no arguments to see all recipes.
 Current release artifacts are:
 
 - Python wheel and source distribution from `uv build`;
-- Nix flake package outputs;
+- Nix flake package outputs, including FlakeHub `v2.1.0`;
 - MkDocs site artifacts from the docs workflow.
 
-GitHub release and docs workflows are present for tag-based publication.
-PyPI publishing and standalone binary distribution remain tracked release
-follow-ups.
+GitHub release, FlakeHub, and docs workflows are present for tag-based
+publication. PyPI publishing and standalone binary distribution remain tracked
+release follow-ups.
