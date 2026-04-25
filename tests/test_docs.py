@@ -9,6 +9,10 @@ def test_project_metadata_points_at_github_repository():
     pyproject = (REPO_ROOT / "pyproject.toml").read_text()
 
     assert "https://github.com/Jesssullivan/DarwinNicUtil" in pyproject
+    assert 'Documentation = "https://jesssullivan.github.io/DarwinNicUtil"' in pyproject
+    assert 'Changelog = "https://github.com/Jesssullivan/DarwinNicUtil/blob/main/CHANGELOG.md"' in pyproject
+    assert 'Releases = "https://github.com/Jesssullivan/DarwinNicUtil/releases"' in pyproject
+    assert 'FlakeHub = "https://flakehub.com/f/Jesssullivan/DarwinNicUtil"' in pyproject
     assert "gitlab.com/tinyland/projects/darwin-mgmt-nic-configurator" not in pyproject
 
 

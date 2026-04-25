@@ -56,7 +56,11 @@ darwin-nic = "darwin_mgmt_nic.app:main"
 
 [project.urls]
 Homepage = "https://github.com/Jesssullivan/DarwinNicUtil"
+Documentation = "https://jesssullivan.github.io/DarwinNicUtil"
 Repository = "https://github.com/Jesssullivan/DarwinNicUtil.git"
+Changelog = "https://github.com/Jesssullivan/DarwinNicUtil/blob/main/CHANGELOG.md"
+Releases = "https://github.com/Jesssullivan/DarwinNicUtil/releases"
+FlakeHub = "https://flakehub.com/f/Jesssullivan/DarwinNicUtil"
 Issues = "https://github.com/Jesssullivan/DarwinNicUtil/issues"
 
 [build-system]
