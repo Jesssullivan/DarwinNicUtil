@@ -45,6 +45,17 @@ nix build .#net-utils -L
 Downstream Home Manager users should consume the flake input and install
 `packages.${system}.darwin-nic`.
 
+The supported public flake reference remains:
+
+```bash
+nix run github:Jesssullivan/DarwinNicUtil -- status
+```
+
+FlakeHub publication is staged through the `Publish to FlakeHub` GitHub Actions
+workflow. Tagged releases publish from `v*.*.*` tags, and maintainers can run a
+manual rolling validation from the workflow dispatch form. Do not add FlakeHub
+install instructions to the README until a public FlakeHub release has completed.
+
 ## Documentation Site
 
 Build locally with:
@@ -69,7 +80,7 @@ GitHub Release.
 | PyPI | Planned through trusted publishing; tracked in [GitHub #11](https://github.com/Jesssullivan/DarwinNicUtil/issues/11) |
 | Standalone binary | PyInstaller spec exists, but binary releases are not validated yet; tracked in [GitHub #9](https://github.com/Jesssullivan/DarwinNicUtil/issues/9) |
 | Homebrew | Deferred; there is no active DarwinNicUtil tap/formula path until PyPI or standalone artifacts are proven, with the decision recorded in [GitHub #10](https://github.com/Jesssullivan/DarwinNicUtil/issues/10) |
-| FlakeHub | Existing Nix flake may be publishable, but FlakeHub is not advertised until proven; tracked in [GitHub #16](https://github.com/Jesssullivan/DarwinNicUtil/issues/16) |
+| FlakeHub | Publish workflow is staged for tag/manual validation, but FlakeHub is not advertised until a public release is proven; tracked in [GitHub #16](https://github.com/Jesssullivan/DarwinNicUtil/issues/16) |
 | Bazel / BCR | Not a primary install path; evaluate only if a real downstream Bazel/Bzlmod consumer needs it, tracked in [GitHub #17](https://github.com/Jesssullivan/DarwinNicUtil/issues/17) |
 | Container image | Not applicable for the CLI today |
 

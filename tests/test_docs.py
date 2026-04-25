@@ -115,6 +115,7 @@ def test_public_docs_stay_generic_and_release_accurate():
 def test_artifacts_docs_match_current_release_policy():
     artifacts = (REPO_ROOT / "docs" / "artifacts.md").read_text()
     readme = (REPO_ROOT / "README.md").read_text()
+    flakehub_workflow_path = REPO_ROOT / ".github" / "workflows" / "flakehub-publish.yml"
 
     assert "wheel/source distributions" in artifacts
     assert "Nix packages" in artifacts
@@ -122,7 +123,16 @@ def test_artifacts_docs_match_current_release_policy():
     assert "not validated yet" in artifacts
     assert "Homebrew | Deferred" in artifacts
     assert "no active DarwinNicUtil tap/formula path" in artifacts
+    assert "FlakeHub | Publish workflow is staged" in artifacts
+    assert "Do not add FlakeHub" in artifacts
+    assert "install instructions to the README" in artifacts
+    assert "nix run github:Jesssullivan/DarwinNicUtil -- status" in artifacts
+    assert "flakehub.com/f/" not in readme.lower()
     assert "PyPI publishing and standalone binary distribution remain tracked release" in readme
+
+    if flakehub_workflow_path.exists():
+        flakehub_workflow = flakehub_workflow_path.read_text()
+        assert "DeterminateSystems/flakehub-push@main" in flakehub_workflow
 
 
 def test_example_profile_networks_are_internally_consistent():

@@ -1,0 +1,77 @@
+name: Publish to FlakeHub
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing v* tag to publish; leave blank for manual rolling validation"
+        required: false
+        type: string
+      rolling:
+        description: "Publish the checked-out ref as a rolling FlakeHub release"
+        required: true
+        default: false
+        type: boolean
+      visibility:
+        description: "FlakeHub visibility"
+        required: true
+        default: public
+        type: choice
+        options:
+          - public
+          - unlisted
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.tag || 'current' }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish flake
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate publish mode
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          TAG: ${{ inputs.tag }}
+          ROLLING: ${{ inputs.rolling }}
+        run: |
+          set -euo pipefail
+          if [[ "${EVENT_NAME}" == "workflow_dispatch" && -z "${TAG}" && "${ROLLING}" != "true" ]]; then
+            echo "Provide a tag or set rolling=true for manual FlakeHub publication."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Install Determinate Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+
+      - name: Check flake
+        run: nix flake check --print-build-logs
+
+      - name: Publish tagged release
+        if: github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.tag != '')
+        uses: DeterminateSystems/flakehub-push@main
+        with:
+          tag: ${{ inputs.tag || github.ref_name }}
+          visibility: ${{ inputs.visibility || 'public' }}
+          error-on-conflict: true
+
+      - name: Publish rolling release
+        if: github.event_name == 'workflow_dispatch' && inputs.rolling && inputs.tag == ''
+        uses: DeterminateSystems/flakehub-push@main
+        with:
+          rolling: true
+          visibility: ${{ inputs.visibility || 'public' }}
