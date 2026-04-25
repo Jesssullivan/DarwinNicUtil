@@ -1,7 +1,7 @@
 # Artifacts
 
 This project currently treats wheel/source distributions, Nix packages,
-FlakeHub releases, and the MkDocs site as release artifacts.
+PyPI distributions, FlakeHub releases, and the MkDocs site as release artifacts.
 
 ## Python Packages
 
@@ -102,13 +102,16 @@ Do not document standalone binaries as a public install path until CI builds
 the artifact, tests it, produces checksums, and the signing/notarization policy
 is explicit.
 
-## PyPI Trusted Publishing
+## PyPI
 
-PyPI publication is staged in the release workflow, but it is not a supported
-install path until the first trusted-publishing upload succeeds.
+PyPI publication is live for `darwin-mgmt-nic-configurator` through trusted
+publishing. Install with:
 
-The package name planned for PyPI is `darwin-mgmt-nic-configurator`. Configure
-a PyPI pending publisher before pushing the first PyPI-enabled release tag:
+```bash
+uv tool install darwin-mgmt-nic-configurator
+```
+
+The project was created through a PyPI pending publisher using these values:
 
 | Field | Value |
 |-------|-------|
@@ -118,11 +121,10 @@ a PyPI pending publisher before pushing the first PyPI-enabled release tag:
 | Environment | `pypi` |
 
 The release workflow uses GitHub OIDC with `pypa/gh-action-pypi-publish` and
-does not use a stored PyPI API token. Keep README and quickstart install
-commands focused on Nix, FlakeHub, wheel/source, and source checkout paths
-until a real PyPI upload is validated.
+does not use a stored PyPI API token. README and quickstart now include PyPI
+install commands because the `v2.1.1` upload has been validated.
 
-PyPI cutover checklist:
+The completed cutover path was:
 
 1. Create the PyPI pending publisher for the package above with the exact
    owner, repository, workflow, and environment values in the table.
@@ -139,14 +141,13 @@ PyPI cutover checklist:
    curl -fsS https://pypi.org/pypi/darwin-mgmt-nic-configurator/json
    ```
 
-7. Only after that verification, add README and quickstart install commands for
-   PyPI.
+7. README and quickstart install commands were added after verification.
 
 ## Not Yet Primary Artifacts
 
 | Surface | Current status |
 |---------|----------------|
-| PyPI | Trusted-publishing workflow is staged; install docs remain pending until first upload is validated, tracked in [GitHub #11](https://github.com/Jesssullivan/DarwinNicUtil/issues/11) |
+| PyPI | Supported through trusted publishing; latest validated upload is `2.1.1` |
 | Standalone binary | PyInstaller spec exists, but binary releases are not validated yet; tracked in [GitHub #9](https://github.com/Jesssullivan/DarwinNicUtil/issues/9) |
 | Homebrew | Deferred; there is no active DarwinNicUtil tap/formula path until PyPI or standalone artifacts are proven, with the decision recorded in [GitHub #10](https://github.com/Jesssullivan/DarwinNicUtil/issues/10) |
 | Bazel / BCR | Not a primary install path; evaluate only if a real downstream Bazel/Bzlmod consumer needs it, tracked in [GitHub #17](https://github.com/Jesssullivan/DarwinNicUtil/issues/17) |
@@ -155,8 +156,8 @@ PyPI cutover checklist:
 ## Bazel / BCR Decision
 
 DarwinNicUtil does not ship a Bazel or Bzlmod module today. The validated
-distribution paths are Python wheel/source distributions, GitHub Releases, Nix
-flake references, and FlakeHub releases.
+distribution paths are PyPI distributions, Python wheel/source distributions,
+GitHub Releases, Nix flake references, and FlakeHub releases.
 
 Do not introduce Bazel as a default local build, test, or install path for this
 repo. Current repo and sibling-repo evidence does not show a downstream
@@ -172,6 +173,6 @@ If a real downstream Bazel consumer appears, keep the surface minimal:
   FlakeHub unless the Bazel path becomes a validated public artifact.
 
 Bazel/BCR work should stay aligned with the broader Tinyland distribution
-substrate. Homebrew should be reconsidered only after a supported PyPI or
-standalone artifact exists. This repo should only document public, validated
-install paths.
+substrate. Homebrew can now be reconsidered if a tap has a real
+maintainer/consumer path, but it remains deferred until then. This repo should
+only document public, validated install paths.

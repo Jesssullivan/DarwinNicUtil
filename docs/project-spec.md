@@ -90,15 +90,13 @@ Consumers own their own device names, secrets, and recovery policy.
 
 Current validated surfaces:
 
+- PyPI distribution for `darwin-mgmt-nic-configurator`.
 - GitHub Release with wheel and source distribution artifacts.
 - Nix flake package outputs.
 - FlakeHub release `v2.1.0` and rolling channel.
 - MkDocs site published by GitHub Pages.
 
 Staged or deferred surfaces:
-
-- PyPI trusted publishing is staged in the release workflow, pending PyPI-side
-  publisher setup and a validated first upload.
 - Standalone binaries are local smoke-test artifacts only until CI builds,
   tests, checksums, and signing/notarization policy exist.
 - Homebrew is deferred until PyPI or standalone binary artifacts are proven.
@@ -116,14 +114,13 @@ The post-v2.1 hardening pass added:
   and development.
 - Agent-facing docs in `AGENTS.md` and `docs/llms.txt`.
 - FlakeHub publication workflow and documented release reference.
-- PyPI trusted-publishing workflow staging.
+- PyPI trusted publishing and validated `2.1.1` upload.
 - Explicit artifact policy for PyPI, binaries, Homebrew, and Bazel/BCR.
 - Coverage gate ratcheted to 50 percent, with current coverage above 55
   percent.
 
 ## Next Work
 
-- Complete PyPI publication after creating the pending publisher.
 - Draft a longer external blog post only if there is a maintained public venue.
 - Add guided-setup behavior tests before the next coverage ratchet.
 - Keep Sophos and ABR ideas as separate boundary spikes until they have a

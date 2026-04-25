@@ -4,6 +4,13 @@ Get a USB management NIC configured without letting it take over normal Wi-Fi or
 
 ## Installation
 
+=== "PyPI"
+
+    ```bash
+    uv tool install darwin-mgmt-nic-configurator
+    darwin-nic setup
+    ```
+
 === "Nix"
 
     ```bash

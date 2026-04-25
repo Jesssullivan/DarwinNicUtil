@@ -144,29 +144,30 @@ def test_artifacts_docs_match_current_release_policy():
     assert "FlakeHub releases are `v2.1.0`" in artifacts
     assert "nix run github:Jesssullivan/DarwinNicUtil -- status" in artifacts
     assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" in readme
-    assert "PyPI trusted-publishing workflow is staged" in readme
-    assert "not documented" in readme
-    assert "until the first upload is validated" in readme
+    assert "PyPI distribution for `darwin-mgmt-nic-configurator`" in readme
+    assert "GitHub Release, PyPI, FlakeHub, and docs workflows" in readme
 
     if flakehub_workflow_path.exists():
         flakehub_workflow = flakehub_workflow_path.read_text()
         assert "DeterminateSystems/flakehub-push@main" in flakehub_workflow
 
 
-def test_pypi_publish_surface_is_staged_but_not_overclaimed():
+def test_pypi_publish_surface_is_live_and_documented():
     artifacts = (REPO_ROOT / "docs" / "artifacts.md").read_text()
     release_workflow = (REPO_ROOT / ".github" / "workflows" / "release.yml").read_text()
     readme = (REPO_ROOT / "README.md").read_text()
     quickstart = (REPO_ROOT / "docs" / "quickstart.md").read_text()
 
-    assert "PyPI Trusted Publishing" in artifacts
+    assert "## PyPI" in artifacts
     assert "darwin-mgmt-nic-configurator" in artifacts
-    assert "PyPI cutover checklist" in artifacts
+    assert "PyPI publication is live" in artifacts
+    assert "uv tool install darwin-mgmt-nic-configurator" in artifacts
+    assert "latest validated upload is `2.1.1`" in artifacts
+    assert "The completed cutover path was" in artifacts
     assert "Verify the GitHub repository environment is named `pypi`" in artifacts
     assert "Do not move or reuse the existing `v2.1.0` tag" in artifacts
     assert "predates the PyPI publishing job" in artifacts
     assert "curl -fsS https://pypi.org/pypi/darwin-mgmt-nic-configurator/json" in artifacts
-    assert "Only after that verification" in artifacts
     assert "release.yml" in artifacts
     assert "`pypi`" in artifacts
     assert "pypa/gh-action-pypi-publish@release/v1" in release_workflow
@@ -175,8 +176,11 @@ def test_pypi_publish_surface_is_staged_but_not_overclaimed():
     assert "name: pypi" in release_workflow
     assert "username:" not in release_workflow
     assert "password:" not in release_workflow
-    assert "pipx install darwin-mgmt-nic-configurator" not in readme
-    assert "pipx install darwin-mgmt-nic-configurator" not in quickstart
+    assert "uv tool install darwin-mgmt-nic-configurator" in readme
+    assert "uv tool install darwin-mgmt-nic-configurator" in quickstart
+    assert "PyPI trusted-publishing workflow is staged" not in readme
+    assert "until the first upload is validated" not in readme
+    assert "install docs remain pending" not in artifacts
 
 
 def test_coverage_gate_is_ratchet_to_fifty_percent():
@@ -202,7 +206,7 @@ def test_project_spec_is_public_and_generic():
     assert "Project Spec: project-spec.md" in mkdocs
     assert "docs/project-spec.md" in llms
     assert "Productionization Results" in spec
-    assert "PyPI trusted publishing is staged" in spec
+    assert "PyPI trusted publishing and validated `2.1.1` upload" in spec
     assert "Coverage gate ratcheted to 50 percent" in spec
     assert "Consumers own their own device names, secrets, and recovery policy" in spec
     assert "Boundary Decisions" in spec

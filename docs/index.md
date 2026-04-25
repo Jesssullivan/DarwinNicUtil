@@ -71,7 +71,6 @@ flowchart LR
 
 ## Artifacts
 
-The release path currently supports Python wheel/source distributions, Nix
-packages, FlakeHub releases, and MkDocs site artifacts. The PyPI publish job is
-staged behind trusted publishing, but PyPI install docs wait for the first
-validated upload. Standalone binary publication remains a tracked follow-up.
+The release path supports PyPI distributions, GitHub Release wheel/source
+files, Nix packages, FlakeHub releases, and MkDocs site artifacts. Standalone
+binary publication remains a tracked follow-up.
