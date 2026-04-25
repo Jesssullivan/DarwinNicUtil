@@ -26,6 +26,17 @@ darwin-nic status
 darwin-nic configure --profile homelab --preserve-wifi
 ```
 
+## Agent and MCP Surface
+
+This repo intentionally does not ship a `.mcp.json` today. The maintained
+agent-facing surfaces are:
+
+- `AGENTS.md` for repo boundaries, validation, and operator constraints;
+- `docs/llms.txt` for compact model-facing documentation context.
+
+Add a repo-local MCP config only when DarwinNicUtil owns a stable, generic MCP
+integration. Do not encode sibling-repo control-plane details here.
+
 ## Validation
 
 Run the full Python test suite after changing runtime behavior or docs that are covered by tests:

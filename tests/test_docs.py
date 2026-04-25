@@ -55,6 +55,16 @@ def test_agents_file_keeps_crs_policy_out_of_darwin_tool():
     assert "vault_mikrotik_password" not in agents
 
 
+def test_agent_surface_documents_no_repo_local_mcp_config():
+    agents = (REPO_ROOT / "AGENTS.md").read_text()
+    llms = (REPO_ROOT / "docs" / "llms.txt").read_text()
+
+    assert not (REPO_ROOT / ".mcp.json").exists()
+    assert "does not ship a `.mcp.json` today" in agents
+    assert "There is no repo-local `.mcp.json` at this time" in llms
+    assert "sibling-repo control-plane details" in agents
+
+
 def test_bastion_docs_keep_device_specific_policy_out_of_darwin_tool():
     bastion = (REPO_ROOT / "docs" / "bastion.md").read_text()
     llms = (REPO_ROOT / "docs" / "llms.txt").read_text()
