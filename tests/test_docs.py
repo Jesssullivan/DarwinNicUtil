@@ -9,7 +9,7 @@ def test_project_metadata_points_at_github_repository():
     pyproject = (REPO_ROOT / "pyproject.toml").read_text()
 
     assert "https://github.com/Jesssullivan/DarwinNicUtil" in pyproject
-    assert 'Documentation = "https://jesssullivan.github.io/DarwinNicUtil"' in pyproject
+    assert 'Documentation = "https://transscendsurvival.org/DarwinNicUtil/"' in pyproject
     assert 'Changelog = "https://github.com/Jesssullivan/DarwinNicUtil/blob/main/CHANGELOG.md"' in pyproject
     assert 'Releases = "https://github.com/Jesssullivan/DarwinNicUtil/releases"' in pyproject
     assert 'FlakeHub = "https://flakehub.com/f/Jesssullivan/DarwinNicUtil"' in pyproject
@@ -70,6 +70,7 @@ def test_agent_surface_documents_no_repo_local_mcp_config():
     assert "does not ship a `.mcp.json` today" in agents
     assert "There is no repo-local `.mcp.json` at this time" in llms
     assert "sibling-repo control-plane details" in agents
+    assert "https://transscendsurvival.org/DarwinNicUtil/" in llms
 
 
 def test_bastion_docs_keep_device_specific_policy_out_of_darwin_tool():
@@ -124,6 +125,8 @@ def test_artifacts_docs_match_current_release_policy():
     artifacts = (REPO_ROOT / "docs" / "artifacts.md").read_text()
     readme = (REPO_ROOT / "README.md").read_text()
     flakehub_workflow_path = REPO_ROOT / ".github" / "workflows" / "flakehub-publish.yml"
+    docs_workflow = (REPO_ROOT / ".github" / "workflows" / "docs.yml").read_text()
+    mkdocs = (REPO_ROOT / "mkdocs.yml").read_text()
 
     assert "wheel/source distributions" in artifacts
     assert "Nix packages" in artifacts
@@ -149,6 +152,10 @@ def test_artifacts_docs_match_current_release_policy():
     assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" in readme
     assert "PyPI distribution for `darwin-mgmt-nic-configurator`" in readme
     assert "GitHub Release, PyPI, FlakeHub, and docs workflows" in readme
+    assert "https://transscendsurvival.org/DarwinNicUtil/" in artifacts
+    assert "https://transscendsurvival.org/DarwinNicUtil/" in readme
+    assert "site_url: https://transscendsurvival.org/DarwinNicUtil/" in mkdocs
+    assert "enablement: true" in docs_workflow
 
     if flakehub_workflow_path.exists():
         flakehub_workflow = flakehub_workflow_path.read_text()
@@ -181,6 +188,8 @@ def test_pypi_publish_surface_is_live_and_documented():
     assert "password:" not in release_workflow
     assert "uv tool install darwin-mgmt-nic-configurator" in readme
     assert "uv tool install darwin-mgmt-nic-configurator" in quickstart
+    assert "https://pypi.org/project/darwin-mgmt-nic-configurator/" in artifacts
+    assert "https://pypi.org/project/darwin-mgmt-nic-configurator/" in readme
     assert "PyPI trusted-publishing workflow is staged" not in readme
     assert "until the first upload is validated" not in readme
     assert "install docs remain pending" not in artifacts

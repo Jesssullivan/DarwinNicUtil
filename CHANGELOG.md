@@ -4,6 +4,11 @@ All notable changes to DarwinNicUtil are recorded here.
 
 ## Unreleased
 
+- Fix the MkDocs deployment workflow so GitHub Pages can be enabled and
+  deployed from Actions.
+- Point docs metadata at the canonical public docs URL.
+- Tighten README and MkDocs install/download tables for PyPI, FlakeHub,
+  GitHub Releases, source checkout, and integration surfaces.
 - Refresh public install and artifact docs around the validated `v2.1.1` PyPI
   and FlakeHub release surfaces.
 - Move PyPI out of the deferred artifact policy after the trusted-publishing

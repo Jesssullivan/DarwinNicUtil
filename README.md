@@ -15,58 +15,43 @@ path intact.
   files, Nix packages, and FlakeHub releases.
 - The PyInstaller spec is retained for manual builds, but standalone binaries
   are not the primary release artifact yet.
+- Public docs are built with MkDocs and published at
+  <https://transscendsurvival.org/DarwinNicUtil/>.
 
 ## Quick Start
 
 ```bash
-# Install from PyPI
+# Recommended CLI install
 uv tool install darwin-mgmt-nic-configurator
 darwin-nic status
+darwin-nic init-config
+darwin-nic configure --profile homelab --preserve-wifi
 
-# Run the stable v2.1.1 release from FlakeHub
+# Run without installing, using the stable FlakeHub release
 nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1" -- status
-
-# Or run directly from GitHub
-nix run github:Jesssullivan/DarwinNicUtil -- status
-nix run github:Jesssullivan/DarwinNicUtil -- configure \
-  --device-ip <device-ipv4> \
-  --laptop-ip <usb-nic-ipv4> \
-  --mgmt-network <cidr> \
-  --preserve-wifi
-
-# Run from a source checkout
-uv sync --extra dev
-uv run darwin-nic status
-uv run darwin-nic configure \
-  --device-ip <device-ipv4> \
-  --laptop-ip <usb-nic-ipv4> \
-  --mgmt-network <cidr> \
-  --preserve-wifi
 ```
 
-For repeated use, create a profile:
+For a one-off setup without a saved profile:
 
 ```bash
-darwin-nic init-config
-darwin-nic config
-darwin-nic configure --profile homelab --preserve-wifi
+darwin-nic configure \
+  --device-ip <device-ipv4> \
+  --laptop-ip <usb-nic-ipv4> \
+  --mgmt-network <cidr> \
+  --preserve-wifi
 ```
 
 ## Install
 
-```bash
-# PyPI
-uv tool install darwin-mgmt-nic-configurator
+| Path | Use When | Command |
+|------|----------|---------|
+| PyPI | You want the normal CLI on your PATH | `uv tool install darwin-mgmt-nic-configurator` |
+| FlakeHub | You want a stable Nix release | `nix profile install "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1"` |
+| GitHub flake | You want the current repository flake | `nix profile install github:Jesssullivan/DarwinNicUtil` |
+| Source checkout | You are developing or testing local changes | `uv sync --extra dev && uv run darwin-nic status` |
 
-# Nix profile from FlakeHub
-nix profile install "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.1"
-
-# Nix profile from GitHub
-nix profile install github:Jesssullivan/DarwinNicUtil
-
-# uv from source
-uv tool install .
-```
+Wheel and source distribution files are attached to GitHub Releases and
+published to PyPI. Standalone binary downloads are not supported yet.
 
 Home Manager and System Manager modules are available under `nix/modules/`.
 For the release shape and productionization summary, see
@@ -172,3 +157,10 @@ Current release artifacts are:
 
 GitHub Release, PyPI, FlakeHub, and docs workflows are present for tag-based
 publication. Standalone binary distribution remains a tracked release follow-up.
+
+Public artifact URLs:
+
+- Docs: <https://transscendsurvival.org/DarwinNicUtil/>
+- PyPI: <https://pypi.org/project/darwin-mgmt-nic-configurator/>
+- Releases: <https://github.com/Jesssullivan/DarwinNicUtil/releases>
+- FlakeHub: <https://flakehub.com/f/Jesssullivan/DarwinNicUtil>

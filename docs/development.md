@@ -88,7 +88,7 @@ GitHub Actions now own the public validation path:
 |----------|---------|
 | `ci.yml` | Format, lint, type-check, tests, docs build, package build |
 | `secret-detection.yml` | Gitleaks and TruffleHog scanning |
-| `docs.yml` | MkDocs build and GitHub Pages artifact upload |
+| `docs.yml` | MkDocs build and GitHub Pages deployment |
 | `release.yml` | Tag-triggered wheel/source distribution, GitHub Release, and PyPI publish |
 
 GitLab CI remains in the repository for compatibility, but GitHub is the
@@ -109,8 +109,8 @@ nix flake check
 Then tag from a clean, reviewed branch:
 
 ```bash
-git tag -a v2.1.1 -m "Release v2.1.1"
-git push origin v2.1.1
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
+git push origin vX.Y.Z
 ```
 
 The release workflow attaches only wheel and source distribution files from
