@@ -123,6 +123,10 @@ def test_artifacts_docs_match_current_release_policy():
     assert "not validated yet" in artifacts
     assert "Homebrew | Deferred" in artifacts
     assert "no active DarwinNicUtil tap/formula path" in artifacts
+    assert "DarwinNicUtil does not ship a Bazel or Bzlmod module today" in artifacts
+    assert "does not show a downstream" in artifacts
+    assert "`MODULE.bazel` or `BUILD.bazel` consumer" in artifacts
+    assert "Do not introduce Bazel as a default local build" in artifacts
     assert "FlakeHub releases" in artifacts
     assert "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.0" in artifacts
     assert "current public" in artifacts
