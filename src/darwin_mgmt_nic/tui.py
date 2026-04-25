@@ -7,6 +7,8 @@ Uses Rich's Layout and Live to create a proper terminal application.
 Uses alternate screen mode (like vim/emacs) - exits cleanly back to shell.
 """
 
+from __future__ import annotations
+
 import itertools
 import shutil
 import signal

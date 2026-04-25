@@ -167,6 +167,17 @@ def test_pypi_publish_surface_is_staged_but_not_overclaimed():
     assert "pipx install darwin-mgmt-nic-configurator" not in quickstart
 
 
+def test_coverage_gate_is_ratchet_to_fifty_percent():
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text()
+    development = (REPO_ROOT / "docs" / "development.md").read_text()
+    release_plan = (REPO_ROOT / "docs" / "superpowers" / "release-sprint-plan.md").read_text()
+
+    assert "fail_under = 50" in pyproject
+    assert "current coverage gate is 50 percent" in development
+    assert "configured 50 percent gate" in release_plan
+    assert "configured 40 percent gate" not in release_plan
+
+
 def test_root_entrypoint_uses_package_app_version():
     script = (REPO_ROOT / "darwin-nic").read_text()
     backend_cli = (REPO_ROOT / "src" / "darwin_mgmt_nic" / "cli.py").read_text()
