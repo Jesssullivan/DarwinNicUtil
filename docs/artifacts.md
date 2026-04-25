@@ -89,6 +89,25 @@ GitHub Release.
 | Bazel / BCR | Not a primary install path; evaluate only if a real downstream Bazel/Bzlmod consumer needs it, tracked in [GitHub #17](https://github.com/Jesssullivan/DarwinNicUtil/issues/17) |
 | Container image | Not applicable for the CLI today |
 
+## Bazel / BCR Decision
+
+DarwinNicUtil does not ship a Bazel or Bzlmod module today. The validated
+distribution paths are Python wheel/source distributions, GitHub Releases, Nix
+flake references, and FlakeHub releases.
+
+Do not introduce Bazel as a default local build, test, or install path for this
+repo. Current repo and sibling-repo evidence does not show a downstream
+`MODULE.bazel` or `BUILD.bazel` consumer for DarwinNicUtil.
+
+If a real downstream Bazel consumer appears, keep the surface minimal:
+
+- add only the `MODULE.bazel` metadata and targets needed by that consumer;
+- prefer consuming an existing wheel, source distribution, or FlakeHub/GitHub
+  source archive over recreating the primary packaging pipeline in Bazel;
+- align any BCR work with Tinyland's existing cache-backed conventions;
+- keep README and quickstart docs focused on uv, wheel/source, Nix, and
+  FlakeHub unless the Bazel path becomes a validated public artifact.
+
 Bazel/BCR work should stay aligned with the broader Tinyland distribution
 substrate. Homebrew should be reconsidered only after a supported PyPI or
 standalone artifact exists. This repo should only document public, validated
