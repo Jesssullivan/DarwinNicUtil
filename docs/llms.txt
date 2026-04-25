@@ -19,6 +19,9 @@ Important boundaries:
   host-side diagnostics.
 - Device-specific topology, credentials, MAC addresses, and switch policy belong
   in consuming operator runbooks.
+- There is no repo-local `.mcp.json` at this time. `AGENTS.md` and this file are
+  the maintained agent-facing integration surfaces until a generic MCP
+  integration exists.
 - The generic bastion commands are:
 
 ```bash
