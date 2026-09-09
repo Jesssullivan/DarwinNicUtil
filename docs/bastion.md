@@ -68,6 +68,15 @@ cabling issues. If link-layer tools work but TCP sockets fail with `No route to
 host`, check the `scutil --nwi` and NECP lines before re-debugging the managed
 device.
 
+Wi-Fi status classifies one bounded `airport -I` sample per collection. The
+interference label is a signal-quality heuristic, not proof of RF collisions.
+Band is reported from explicit frequency or band metadata; channel numbers
+alone are ambiguous across 2.4, 5 and 6 GHz. Missing, invalid or conflicting
+metadata yields `Unknown`, including older `airport` output that reports only
+a channel. The tool does not add an active scan or require another diagnostic
+provider to infer missing data. Its generic connectivity ping follows host
+routing and does not establish that traffic used Wi-Fi.
+
 ## Boundaries
 
 DarwinNicUtil owns:
