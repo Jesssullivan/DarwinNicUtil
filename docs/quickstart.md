@@ -18,7 +18,7 @@ only when developing or validating local changes.
 
     ```bash
     # Stable release
-    nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.2" -- setup
+    nix run "https://flakehub.com/f/Jesssullivan/DarwinNicUtil/v2.1.3" -- setup
 
     # Direct GitHub flake reference
     nix run github:Jesssullivan/DarwinNicUtil -- configure \
