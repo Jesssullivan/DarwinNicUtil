@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.14"
 
 [[package]]
@@ -168,7 +168,7 @@ wheels = [
 
 [[package]]
 name = "darwin-mgmt-nic-configurator"
-version = "2.1.2"
+version = "2.1.3"
 source = { editable = "." }
 dependencies = [
     { name = "rich" },

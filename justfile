@@ -151,7 +151,7 @@ clean:
 # Show project and environment info
 info:
     @echo "Project: darwin-mgmt-nic-configurator"
-    @echo "Version: 2.0.0"
+    @uv run darwin-nic --version
     @echo "Python:  $(python3 --version 2>/dev/null || echo 'not found')"
     @echo "uv:      $(uv --version 2>/dev/null || echo 'not found')"
     @echo "nix:     $(nix --version 2>/dev/null || echo 'not found')"

@@ -6,6 +6,17 @@ All notable changes to DarwinNicUtil are recorded here.
 
 - No unreleased changes.
 
+## 2.1.3 - 2026-09-09
+
+- Fix recursive Wi-Fi status collection by sampling the interface once per
+  status request and classifying interference from that sample.
+- Report an unknown Wi-Fi band when only an ambiguous channel is available;
+  reject malformed or conflicting explicit band and frequency fields.
+- Clarify that generic host ping results do not prove the Wi-Fi path or identify
+  a packet collision.
+- Make `just info` report the installed project version instead of a stale
+  hardcoded version.
+
 ## 2.1.2 - 2026-04-25
 
 - Fix the MkDocs deployment workflow so GitHub Pages can be enabled and
