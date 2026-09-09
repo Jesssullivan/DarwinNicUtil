@@ -10,6 +10,7 @@ service reordering, and hardware constraints.
 from __future__ import annotations
 
 import logging
+import re
 import subprocess
 import threading
 import time
@@ -87,7 +88,7 @@ class WiFiMetrics:
     ssid: str
     bssid: str
     channel: int
-    band: str  # 2.4GHz or 5GHz
+    band: str  # 2.4GHz, 5GHz, 6GHz, or Unknown
 
 
 @dataclass
@@ -405,6 +406,17 @@ class WiFiMonitor:
         if not metrics:
             return False
 
+        interference_score = self._interference_score(metrics)
+        is_interfered = interference_score >= 2
+
+        if is_interfered:
+            self.logger.warning(f"Potential WiFi interference indicators (score: {interference_score}/4)")
+
+        return is_interfered
+
+    @staticmethod
+    def _interference_score(metrics: WiFiMetrics) -> int:
+        """Classify an existing sample without collecting another one."""
         # Check for interference indicators
         interference_indicators = [
             metrics.snr < 20,  # Low signal-to-noise ratio
@@ -413,13 +425,39 @@ class WiFiMonitor:
             metrics.status == WiFiStatus.DEGRADED,
         ]
 
-        interference_score = sum(interference_indicators)
-        is_interfered = interference_score >= 2
+        return sum(interference_indicators)
 
-        if is_interfered:
-            self.logger.warning(f"WiFi interference detected (score: {interference_score}/4)")
+    @staticmethod
+    def _band_from_metadata(data: dict[str, str]) -> str:
+        """Use explicit band/frequency metadata; channel numbers overlap bands."""
+        bands = {"2.4ghz": "2.4GHz", "5ghz": "5GHz", "6ghz": "6GHz"}
+        explicit_band = bands.get(re.sub(r"\s+", "", data.get("band", "")).lower(), "Unknown")
+        if "band" in data and explicit_band == "Unknown":
+            return "Unknown"
+        raw_frequencies = [data[key] for key in ("frequency", "freq") if key in data]
+        if not raw_frequencies:
+            return explicit_band
 
-        return is_interfered
+        frequencies = set()
+        for raw_frequency in raw_frequencies:
+            match = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*(MHz|GHz)?\s*", raw_frequency, re.IGNORECASE)
+            if match is None:
+                return "Unknown"
+            frequencies.add(float(match[1]) * (1000 if (match[2] or "MHz").lower() == "ghz" else 1))
+        if len(frequencies) != 1:
+            return "Unknown"
+        frequency = frequencies.pop()
+        if 2400 <= frequency < 2500:
+            frequency_band = "2.4GHz"
+        elif 4900 <= frequency < 5925:
+            frequency_band = "5GHz"
+        elif 5925 <= frequency <= 7125:
+            frequency_band = "6GHz"
+        else:
+            return "Unknown"
+        if explicit_band != "Unknown" and explicit_band != frequency_band:
+            return "Unknown"
+        return frequency_band
 
     def get_connection_details(self) -> dict[str, str]:
         """Get detailed WiFi connection information"""
@@ -454,11 +492,7 @@ class WiFiMonitor:
         bssid = data.get("BSSID", "Unknown")
         channel = int(data.get("channel", "0").split(",")[0])
 
-        # Determine band from channel
-        if channel <= 14:
-            band = "2.4GHz"
-        else:
-            band = "5GHz"
+        band = self._band_from_metadata(data)
 
         # Extract RSSI and noise
         rssi = 0
@@ -486,12 +520,10 @@ class WiFiMonitor:
             status = WiFiStatus.DISCONNECTED
         elif snr < 15:
             status = WiFiStatus.DEGRADED
-        elif self.detect_interference():
-            status = WiFiStatus.INTERFERED
         else:
             status = WiFiStatus.CONNECTED
 
-        return WiFiMetrics(
+        metrics = WiFiMetrics(
             status=status,
             signal_strength=rssi,
             noise_level=noise,
@@ -503,6 +535,9 @@ class WiFiMonitor:
             channel=channel,
             band=band,
         )
+        if status == WiFiStatus.CONNECTED and self._interference_score(metrics) >= 2:
+            metrics.status = WiFiStatus.INTERFERED
+        return metrics
 
     def _create_disconnected_metrics(self) -> WiFiMetrics:
         """Create metrics for disconnected state"""

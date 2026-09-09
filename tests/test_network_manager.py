@@ -4,6 +4,8 @@ Tests for network manager parsing, scoring, and safety helpers.
 
 import subprocess
 
+import pytest
+
 from darwin_mgmt_nic.config import NetworkInterface
 from darwin_mgmt_nic.network_manager import (
     CableQualityInfo,
@@ -170,10 +172,9 @@ class TestWiFiMonitor:
 
         assert monitor._airport_path.endswith("Current/Resources/airport")
 
-    def test_parse_airport_output_builds_metrics(self, monkeypatch):
+    def test_parse_airport_output_builds_metrics(self):
         monitor = WiFiMonitor.__new__(WiFiMonitor)
         monitor.timeout = 10
-        monkeypatch.setattr(monitor, "detect_interference", lambda: False)
 
         metrics = monitor._parse_airport_output(
             """
@@ -183,6 +184,7 @@ class TestWiFiMonitor:
             SSID: labwifi
             BSSID: aa:bb:cc:dd:ee:ff
             channel: 149,1
+            frequency: 5745 MHz
             """
         )
 
@@ -194,10 +196,9 @@ class TestWiFiMonitor:
         assert metrics.ssid == "labwifi"
         assert metrics.band == "5GHz"
 
-    def test_parse_airport_output_marks_degraded_and_24ghz(self, monkeypatch):
+    def test_parse_airport_output_marks_degraded_and_24ghz(self):
         monitor = WiFiMonitor.__new__(WiFiMonitor)
         monitor.timeout = 10
-        monkeypatch.setattr(monitor, "detect_interference", lambda: False)
 
         metrics = monitor._parse_airport_output(
             """
@@ -206,12 +207,74 @@ class TestWiFiMonitor:
             lastTxRate: 8
             SSID: slowwifi
             channel: 6
+            frequency: 2437
             """
         )
 
         assert metrics.status == WiFiStatus.DEGRADED
         assert metrics.snr == 10
         assert metrics.band == "2.4GHz"
+
+    @pytest.mark.parametrize(
+        ("rssi", "noise", "rate", "expected"),
+        [
+            (-55, -92, 144, WiFiStatus.CONNECTED),
+            (-60, -80, 4, WiFiStatus.INTERFERED),
+            (-80, -90, 8, WiFiStatus.DEGRADED),
+        ],
+    )
+    def test_status_classifies_one_collected_sample(self, monkeypatch, rssi, noise, rate, expected):
+        monkeypatch.setattr(WiFiMonitor, "_find_airport_command", lambda self: "/fixture/airport")
+        monitor = WiFiMonitor(timeout=2)
+        calls = []
+
+        def fake_run(cmd, **kwargs):
+            calls.append((cmd, kwargs))
+            # Fail promptly if classification tries to recollect recursively.
+            assert len(calls) == 1
+            return completed(
+                cmd,
+                stdout=f"agrCtlRSSI: {rssi}\nagrCtlNoise: {noise}\nlastTxRate: {rate}\n"
+                "SSID: fixture\nchannel: 5\nfrequency: 5975 MHz\n",
+            )
+
+        monkeypatch.setattr("darwin_mgmt_nic.network_manager.subprocess.run", fake_run)
+        metrics = monitor.get_wifi_status()
+
+        assert calls == [(["/fixture/airport", "-I"], {"capture_output": True, "text": True, "timeout": 2})]
+        assert metrics.status == expected
+        assert metrics.band == "6GHz"
+
+        calls.clear()
+        assert monitor.detect_interference() is (expected != WiFiStatus.CONNECTED)
+        assert len(calls) == 1
+
+    @pytest.mark.parametrize(
+        ("metadata", "expected"),
+        [
+            ("channel: 5\nfrequency: 5975", "6GHz"),
+            ("channel: 85\nfrequency: 6.375 GHz", "6GHz"),
+            ("channel: 36\nfreq: 5180 MHz", "5GHz"),
+            ("channel: 6\nfrequency: 2437", "2.4GHz"),
+            ("channel: 5\nband: 6 GHz", "6GHz"),
+            ("channel: 149,1", "Unknown"),
+            ("channel: 5", "Unknown"),
+            ("", "Unknown"),
+            ("channel: 5\nfrequency: unavailable", "Unknown"),
+            ("channel: 5\nfrequency: nan", "Unknown"),
+            ("channel: 5\nfrequency: 900 MHz", "Unknown"),
+            ("channel: 5\nfrequency: 5975 MHz\nband: 2.4 GHz", "Unknown"),
+            ("channel: 5\nfrequency: 5975 MHz\nfreq: 2437 MHz", "Unknown"),
+            ("channel: 5\nfrequency: 5975 MHz\nfreq: 6375 MHz", "Unknown"),
+            ("channel: 5\nfrequency: 5975 MHz\nfreq: invalid", "Unknown"),
+            ("channel: 5\nfrequency: 5975 MHz\nband: invalid", "Unknown"),
+            ("channel: 5\nfrequency: 5975 MHz\nfreq: 5.975 GHz\nband: 6 GHz", "6GHz"),
+        ],
+    )
+    def test_band_uses_explicit_metadata_instead_of_ambiguous_channel(self, metadata, expected):
+        monitor = WiFiMonitor.__new__(WiFiMonitor)
+        metrics = monitor._parse_airport_output("agrCtlRSSI: -55\nagrCtlNoise: -92\nlastTxRate: 144\n" + metadata)
+        assert metrics.band == expected
 
     def test_get_wifi_status_handles_missing_command_failure_timeout_and_success(self, monkeypatch):
         monitor = WiFiMonitor.__new__(WiFiMonitor)
